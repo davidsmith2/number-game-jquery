@@ -1,0 +1,277 @@
+/* =============================================================================             
+Original images courtesy of:
+http://static5.depositphotos.com/1032882/415/v/950/depositphotos_4159628-Numbers-background.jpg
+http://www.judepullen.com/designmodelling/files/2012/09/Copy-of-graph-paper-background.gif
+http://us.123rf.com/400wm/400/400/panyanon/panyanon1204/panyanon120400036/13282591-check-mark-stickers.jpg
+   ========================================================================== */
+/* BASIC */
+body {
+  background-color:black;
+  background-image:url(../images/body-bg.jpg);
+  background-position:center top;
+  background-repeat:no-repeat;
+  font-family:'Comic Sans MS';
+  font-size:0.9em;
+  margin:0;
+  padding:0;
+}
+h1 {
+  margin:0;
+  text-align:center;
+}
+/* LAYOUT */
+#outer-wrapper {
+  height:766px;
+  margin:0 auto;
+  padding:1em;
+  width:600px;
+}
+#inner-wrapper {
+  background-color:#fff;
+  background-image:url(../images/inner-wrapper-bg.gif);
+  background-position:0 0;
+  background-repeat:repeat;
+  border-radius:10px;
+  margin:0 auto;
+  padding:20px;
+  width:500px;
+}
+/* PLAYING AREA */
+/* game board */
+#game-board {
+  border:1px solid #777;
+  border-collapse:collapse;
+  border-width:1px 1px 0 0;
+  margin-top:24px;
+  width:100%;
+}
+/* gauges */
+#gauges {
+  float:left;
+  margin:0;
+  width:100%;
+}
+#gauges > div {
+  float:left;
+  text-align:center;
+  width:100px;
+}
+#gauges > div:first-child {
+  border:solid #777;
+  border-width:0 0 0 1px;
+  width:99px;
+}
+#gauges > div > span {
+  border-style:dotted;
+  display:block;
+  padding:6px 4px;
+}
+#gauges > div > span.label {
+  background-color:#333;
+  border-color:#fff;
+  border-width:0 1px 0 0;
+  color:#fff;
+  height:20px;
+}
+#gauges > div > span.value {
+  background-color:#bbb;
+  border-color:#777;
+  border-width:0 1px 0 0;
+  height:21px;
+}
+#gauges > div:last-child span {
+  border:none;
+}
+#gauges > div > span.low {
+  color:#00c;
+}
+#gauges > div > span.high {
+  color:#c00;
+}
+#gauges > div > span.match {
+  color:#0c0;
+}
+/* tiles */
+#tiles {
+  background-color:#fff;
+  border-right:solid #777;
+  border-right-width:1px;
+  border-top:double #777;
+  border-top-width:3px;
+  clear:left;
+  width:100%;
+  height:500px;
+}
+#tiles div {
+  background-color: #222;
+  background-position:center center;
+  background-repeat:no-repeat;
+  border-bottom:solid #777;
+  border-bottom-width:1px;
+  border-left:solid #777;
+  border-left-width:1px;
+  float:left;
+  height:49px;
+  position:relative;
+  text-align:center;
+  width:49px;
+}
+#tiles div.visited,
+#tiles div.match {
+  background-color: #fff;
+}
+#tiles div.visited {
+  background-image:url(../images/cross.jpg);
+}
+#tiles div.match {
+  background-image:url(../images/check.jpg);
+}
+#tiles a {
+  background-color:#fff;
+  color:#222;
+  display:block;
+  height:20px;
+  left:0;
+  padding:15px 4px 14px;
+  position:relative;
+  text-decoration:none;
+  top:0;
+  width:41px;
+}
+#tiles a:hover {
+  border:1px solid #777;
+  font-size:1.25em;
+  height:30px;
+  left:-6px;
+  position:absolute;
+  top:-5px;
+  width:51px;
+  z-index:1;
+}
+#tiles a,
+#tiles a:hover {
+  /* WebKit */
+  -webkit-transition-duration:			0.25s;
+  -webkit-transition-property: 			font-size, height, left, position, top, width;
+  -webkit-transition-timing-function: 	ease-out;
+  /* Mozilla */
+  -moz-transition-duration:				0.25s;
+  -moz-transition-property: 			font-size, height, left, position, top, width;
+  -moz-transition-timing-function: 		ease-out;
+  /* Opera */
+  -o-transition-duration:				0.25s;
+  -o-transition-property: 				font-size, height, left, position, top, width;
+  -o-transition-timing-function: 		ease-out;
+  /* W3C */
+  transition-duration:					0.25s;
+  transition-property: 					font-size, height, left, position, top, width;
+  transition-timing-function: 			ease-out;
+}
+#tiles a.visited,
+#tiles a.match {
+  color:#fff;
+  cursor:default;
+  visibility:hidden;
+}
+#tiles a.visited:hover {
+  background-color:#fff;
+}
+/* DIALOGS (general) */
+div.dialog {
+  background-color:#222;
+  border:10px solid #ccc;
+  border-radius:10px;
+  color:#ccc;
+  display:none;
+  padding:10px;
+  position:fixed;
+  width:460px;
+  z-index:10000;
+}
+div.dialog-content {
+  padding:10px;
+}
+div.dialog-content > p {
+  text-align:center;
+}
+/* SETTINGS DIALOG */
+#settings-form {
+  margin-top:12px;
+}
+#settings-form > fieldset {
+  border:none;
+  margin:0 auto;
+  padding:6px 0;
+}
+#settings-form legend {
+  border-bottom:1px solid #ccc;
+  display:block;
+  font-weight:bold;
+  padding-bottom:3px;
+  width:100%;
+}
+#settings-form label {
+  display:block;
+  margin-top:6px;
+}
+/* WIN AND LOSE DIALOGS */
+span.secret-number {
+  display:block;
+  font-size:2em;
+  margin-top:12px;
+}
+#win span.secret-number {
+  color:#0c0;
+}
+#lose span.secret-number {
+  color:#c00;
+}
+/* BUTTONS */
+div.buttons {
+  padding:24px 0 12px;
+  text-align:center;
+}
+a.button {
+  border-radius:10px;
+  color:#000;
+  margin:0 10px;
+  padding:9px 15px;
+  text-decoration:none;
+}
+a.button:hover {
+  background-color:#666;
+}
+a.button-red {
+  background-color:#a00;
+  color:#eee;
+}
+a.button-red:hover {
+  background-color:#c00;
+}
+a.button-yellow {
+  background-color:#aa0;
+  color:#222;
+}
+a.button-yellow:hover {
+  background-color:#cc0;
+}
+a.button-green {
+  background-color:#0a0;
+  color:#ddd;
+}
+a.button-green:hover {
+  background-color:#0c0;
+}
+/* HELPERS */
+.margin-left-0 {
+  margin-left:0;
+}
+.padding-left-3 {
+  padding-left:15px;
+}
+.padding-left-4 {
+  padding-left:20px;
+}
+.spaced-2 > li {
+  margin-top:6px;
+}
