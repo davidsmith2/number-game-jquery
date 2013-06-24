@@ -7,7 +7,7 @@ http://us.123rf.com/400wm/400/400/panyanon/panyanon1204/panyanon120400036/132825
 /* BASIC */
 body {
   background-color:black;
-  background-image:url(../images/body-bg.jpg);
+  background-image:url(images/body-bg.jpg);
   background-position:center top;
   background-repeat:no-repeat;
   font-family:'Comic Sans MS';
@@ -28,7 +28,7 @@ h1 {
 }
 #inner-wrapper {
   background-color:#fff;
-  background-image:url(../images/inner-wrapper-bg.gif);
+  background-image:url(images/inner-wrapper-bg.gif);
   background-position:0 0;
   background-repeat:repeat;
   border-radius:10px;
@@ -121,10 +121,10 @@ h1 {
   background-color: #fff;
 }
 #tiles div.visited {
-  background-image:url(../images/cross.jpg);
+  background-image:url(images/cross.jpg);
 }
 #tiles div.match {
-  background-image:url(../images/check.jpg);
+  background-image:url(images/check.jpg);
 }
 #tiles a {
   background-color:#fff;
@@ -195,22 +195,26 @@ div.dialog-content > p {
   text-align:center;
 }
 /* SETTINGS DIALOG */
-#settings-form {
+#settings-form,
+#profile-form {
   margin-top:12px;
 }
-#settings-form > fieldset {
+#settings-form > fieldset,
+#profile-form > fieldset {
   border:none;
   margin:0 auto;
   padding:6px 0;
 }
-#settings-form legend {
+#settings-form legend,
+#profile-form legend {
   border-bottom:1px solid #ccc;
   display:block;
   font-weight:bold;
   padding-bottom:3px;
   width:100%;
 }
-#settings-form label {
+#settings-form label,
+#profile-form label {
   display:block;
   margin-top:6px;
 }
@@ -220,47 +224,80 @@ span.secret-number {
   font-size:2em;
   margin-top:12px;
 }
+#win {
+  text-align:center;
+}
 #win span.secret-number {
   color:#0c0;
 }
+#win-form > div {
+  margin-top:6px;
+}
 #lose span.secret-number {
   color:#c00;
+}
+/* LEADERBOARD */
+#leaderboard-table {
+  margin:12px auto;
+}
+#leaderboard-table th,
+#leaderboard-table td {
+  padding:3px;
+}
+#leaderboard-table th {
+  border-bottom:1px solid #ccc;
+  text-align:left;
+}
+#leaderboard-table td {
+  text-align:center;
+}
+#leaderboard-table td:first-child {
+  text-align:left;
 }
 /* BUTTONS */
 div.buttons {
   padding:24px 0 12px;
   text-align:center;
 }
-a.button {
+.button {
   border-radius:10px;
   color:#000;
+  font-family:'Comic Sans MS';
+  font-size:0.9em;
   margin:0 10px;
   padding:9px 15px;
   text-decoration:none;
 }
-a.button:hover {
+.button:hover {
   background-color:#666;
 }
-a.button-red {
+.button-red {
   background-color:#a00;
   color:#eee;
 }
-a.button-red:hover {
+.button-red:hover {
   background-color:#c00;
 }
-a.button-yellow {
-  background-color:#aa0;
-  color:#222;
-}
-a.button-yellow:hover {
-  background-color:#cc0;
-}
-a.button-green {
+.button-green {
   background-color:#0a0;
   color:#ddd;
 }
-a.button-green:hover {
+.button-green:hover {
   background-color:#0c0;
+}
+.button-blue {
+  background-color:#07a;
+  color:#ddd;
+}
+.button-blue:hover {
+  background-color:#07c;
+}
+.button-yellow {
+  background-color:#aa0;
+  color:#222;
+}
+.button-yellow:hover {
+  background-color:#cc0;
 }
 /* HELPERS */
 .margin-left-0 {
@@ -274,4 +311,13 @@ a.button-green:hover {
 }
 .spaced-2 > li {
   margin-top:6px;
+}
+.width-50 {
+  width:50%;
+}
+.width-75 {
+  width:75%;
+}
+.width-100 {
+  width:100%;
 }

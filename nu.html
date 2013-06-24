@@ -78,6 +78,7 @@
     <div class="buttons">
       <a href="#play" class="button button-green">Play</a>
       <a href="#settings" class="button button-yellow dialog">Settings</a>
+      <a href="#profile" class="button button-blue dialog">Profile</a>
     </div>
   </div>
 </div>
@@ -101,6 +102,23 @@
   </div>
 </div>
 <!-- end settings -->
+<!-- begin profile -->
+<div id="profile" class="dialog">
+  <div class="dialog-content">
+  	<h1>Your Profile</h1>
+    <form id="profile-form">
+    	<fieldset>
+    		<legend>Personal Information</legend>
+			<label for="profile-form-name">Name: <input class="width-50" id="profile-form-name" placeholder="A. User" type="text" /></label>
+    	</fieldset>
+    </form>
+    <div class="buttons">
+      <a href="#splash" class="button button-green dialog">OK</a>
+      <a href="#splash" class="button button-red dialog">Cancel</a>
+    </div>
+  </div>
+</div>
+<!-- end profile -->
 <!-- begin win -->
 <div id="win" class="dialog">
   <div class="dialog-content">
@@ -108,10 +126,11 @@
     <p>You guessed right. The secret number was&#8230;
       <span class="secret-number"><!-- secret number--></span>
     </p>
-    <div class="buttons">
-      <a href="#play" class="button button-green">Replay</a>
-      <a href="#splash" class="button button-red dialog">Exit</a>
-    </div>
+	<div class="buttons">
+    	<a href="#play" class="button button-green">Replay</a>
+    	<a href="#leaderboard" class="button button-blue dialog">Leaderboard</a>
+    	<a href="#splash" class="button button-red dialog">Exit</a>
+	</div>
   </div>
 </div>
 <!-- end win -->
@@ -123,12 +142,50 @@
 	  <span class="secret-number"><!-- secret number--></span>
     </p>
     <div class="buttons">
-      <a href="#play" class="button button-green">Replay</a>
-      <a href="#splash" class="button button-red dialog">Exit</a>
+    	<a href="#play" class="button button-green">Replay</a>
+    	<a href="#leaderboard" class="button button-blue dialog">Leaderboard</a>
+    	<a href="#splash" class="button button-red dialog">Exit</a>
     </div>
   </div>
 </div>
 <!-- end lose -->
+<!-- begin leaderboard -->
+<div id="leaderboard" class="dialog">
+  <div class="dialog-content">
+    <h1>Leaderboard</h1>
+    <table cellspacing="0" id="leaderboard-table">
+    	<thead>
+    		<tr>
+    			<th>Name</th>
+    			<th>Guesses Allowed</th>
+    			<th>Guesses Made</th>
+    		</tr>
+    	</thead>
+    	<tbody>
+    		<tr>
+    			<td>Peter Peterson</td>
+    			<td>7</td>
+    			<td>7</td>
+    		</tr>
+    		<tr>
+    			<td>Andrei Andreev</td>
+    			<td>10</td>
+    			<td>10</td>
+    		</tr>
+    		<tr>
+   			<td>Nick Nixon</td>
+    			<td>Naive Novice</td>
+    			<td>13</td>
+    		</tr>
+    	</tbody>
+    </table>
+	<div class="buttons">
+    	<a href="#play" class="button button-green dialog">Replay</a>
+    	<a href="#splash" class="button button-red dialog">Exit</a>
+	</div>
+  </div>
+</div>
+<!-- end leaderboard -->
 <!-- end dialogs -->
 </body>
 </html>
