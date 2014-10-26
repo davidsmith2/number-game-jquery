@@ -89,10 +89,23 @@
 
     var PlayingAreaView = Backbone.View.extend({
         initialize: function () {
+            var gaugesView,
+                tilesView;
+            gaugesView = new GaugesView({
+                el: this.$('#gauges'),
+                model: app.models.game
+            });
+            tilesView =  new TilesView({
+                el: this.$('#tiles')
+            });
             this.listenTo(vent, 'game:start', this.show);
+            this.listenTo(vent, 'game:result', this.onGameResult);
         },
         show: function () {
             this.$el.expose();
+        },
+        onGameResult: function () {
+            console.log('result');
         }
     });
 
@@ -205,6 +218,16 @@
         }
     });
 
+    var PlayButtonView = Backbone.View.extend({
+        events: {
+            'click': 'onClick'
+        },
+        onClick: function (e) {
+            e.preventDefault();
+            vent.trigger('game:start');
+        }
+    });
+
     var DialogView = Backbone.View.extend({
         initialize: function () {
             var id = this.$el.attr('id');
@@ -238,6 +261,15 @@
             var overlay = this.$el.hide().data('overlay');
             overlay.close();
             $.mask.close();
+        }
+    });
+
+    var SplashView = DialogView.extend({
+        initialize: function () {
+            this._super();
+            return new PlayButtonView({
+                el: this.$('a[href="#play"]')
+            });
         }
     });
 
@@ -291,46 +323,22 @@
         }
     });
 
-    var PlayButtonView = Backbone.View.extend({
-        events: {
-            'click': 'onClick'
-        },
-        onClick: function (e) {
-            e.preventDefault();
-            vent.trigger('game:start');
-        }
-    });
-
     // init code
 
     var app = {};
     app.models = {};
+    app.models.game = new Game();
 
     app.init = function () {
-        var playingAreaView,
-            gaugesView,
-            tilesView,
-            playButtonView;
-
-        // init models
-        app.models.game = new Game();
-
-        // init views
-        playingAreaView = new PlayingAreaView({
-            el: '#play'
-        });
-        gaugesView = new GaugesView({
-            el: '#gauges',
-            model: app.models.game
-        });
-        tilesView =  new TilesView({
-            el: '#tiles'
-        });
-        playButtonView = new PlayButtonView({
-            el: $('a[href="#play"]')
-        });
+        app.initPlayingArea($('#play'));
         $('div.dialog').each(app.initDialogs);
         $('a.dialog').each(app.initDialogTriggers);
+    };
+
+    app.initPlayingArea = function ($el) {
+        return new PlayingAreaView({
+            el: $el
+        });
     };
 
     app.initDialogs = function () {
@@ -338,6 +346,11 @@
             id = $el.attr('id'),
             view;
         switch (id) {
+            case 'splash':
+                view = new SplashView({
+                    el: $el
+                });
+                break;
             case 'settings':
                 view = new SettingsView({
                     el: $el,
