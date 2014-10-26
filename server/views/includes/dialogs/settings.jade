@@ -1,0 +1,20 @@
+#settings.dialog
+    .dialog-content
+        h1 Settings
+        form#settings-form
+            fieldset
+                legend Number of Guesses
+                label
+                    input(name='level', type='radio', value='13')
+                    | 13 (naive novices)
+                label
+                    input(name='level', type='radio', value='10')
+                    | 10 (aspirational amateurs)
+                label
+                    input(name='level', type='radio', value='7')
+                    | 7 (polished professionals)
+        .buttons
+            a.button.button-green.dialog(href='#splash')
+                | OK
+            a.button.button-red.dialog(href='#splash')
+                | Cancel

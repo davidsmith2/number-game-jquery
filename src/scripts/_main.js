@@ -82,7 +82,6 @@
         handleRightGuess: function (secretNumber) {
             this.set('guessAccuracy', config.strings.rightGuess);
             vent.trigger('game:result', 'win', secretNumber);
-            //isGameLeaderboardWorthy(game);
         }
     });
 
