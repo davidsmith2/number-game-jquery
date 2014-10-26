@@ -119,7 +119,12 @@
             }
         },
         update: function (id) {
-            this.$('#' + id + ' > .value').html(this.model.get(this.ids[id]));
+            var $el = this.$('#' + id + ' > .value'),
+                guessAccuracy = this.model.get('guessAccuracy');
+            $el.html(this.model.get(this.ids[id]));
+            if (guessAccuracy && id === 'guess-accuracy') {
+                $el.removeClass().addClass('value ' + guessAccuracy.toLowerCase());
+            }
         }
     });
 
@@ -351,14 +356,12 @@
                 });
         }
         return view;
-
     };
 
     app.initDialogTriggers = function () {
         return new DialogTriggerView({
             el: $(this)
         });
-
     };
 
     app.init();
