@@ -14,19 +14,19 @@
             rightGuess: 'Match'
         },
         overlays: {
-            basic: {
-                closeOnClick:false,
+            manual: {
+                closeOnClick: false,
                 mask: {
-                    color:'#333',
-                    loadSpeed:100,
+                    color: '#333',
+                    loadSpeed: 100,
                     maskId: 'mask',
-                    opacity:0.75,
-                    zIndex:9998
+                    opacity: 0.75,
+                    zIndex: 9998
                 },
-                oneInstance:false
+                oneInstance: false
             },
-            autoload: {
-                load:true
+            auto: {
+                load: true
             }
         }
     };
@@ -80,8 +80,8 @@
             this.set('guessAccuracy', guessAccuracy);
         },
         handleRightGuess: function (secretNumber) {
-            this.set('guessAccuracy', config.strings.rightGuess);
             vent.trigger('game:result', 'win', secretNumber);
+            this.set('guessAccuracy', config.strings.rightGuess);
         }
     });
 
@@ -170,7 +170,13 @@
             this.tileLinkView.$el
                 .unbind('click')
                 .attr('rel', '#' + result)
-                .overlay(config.overlays.autoload);
+                .overlay(
+                    $.extend(
+                        {},
+                        config.overlays.manual,
+                        config.overlays.auto
+                    )
+                );
         },
         handleWin: function () {
             var stateToRemove = this.states[0],
@@ -196,17 +202,18 @@
 
     var DialogView = Backbone.View.extend({
         initialize: function () {
-            if (this.$el.attr('id') === 'splash') {
+            var id = this.$el.attr('id');
+            if (id === 'splash') {
                 this.$el
                     .overlay(
                         $.extend(
                             {},
-                            config.overlays.basic,
-                            config.overlays.autoload
+                            config.overlays.manual,
+                            config.overlays.auto
                         )
                     );
             } else {
-                this.$el.overlay(config.overlays.basic);
+                this.$el.overlay(config.overlays.manual);
             }
             this.listenTo(vent, 'dialog:show', this.show);
             this.listenTo(vent, 'game:start', this.closeOverlay);
@@ -268,7 +275,7 @@
         },
         initialize: function () {
             var self = this;
-            this.$el.attr('rel', this.$el.attr('href')).overlay(config.overlays.basic);
+            this.$el.attr('rel', this.$el.attr('href')).overlay(config.overlays.manual);
         },
         onClick: function (e) {
             e.preventDefault();
