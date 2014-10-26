@@ -48,12 +48,15 @@
         initialize: function () {
             var secretNumber = this.generateSecretNumber(),
                 self = this;
+
+            console.log(secretNumber)
+
             this.listenTo(vent, 'game:guess', function (guess) {
                 self.handleGuess(guess);
                 if (self.get('guess') !== secretNumber) {
                     self.handleWrongGuess(guess, secretNumber);
                 } else {
-                    self.handleRightGuess(secretNumber);
+                    self.handleRightGuess(guess, secretNumber);
                 }
             });
         },
@@ -70,7 +73,10 @@
         handleWrongGuess: function (guess, secretNumber) {
             var guessAccuracy;
             if (this.get('guessesRemaining') === 0) {
-                vent.trigger('game:result', 'lose', secretNumber);
+                vent.trigger('game:result', {
+                    result: 'lose',
+                    secretNumber: secretNumber
+                });
             }
             if (guess < secretNumber) {
                 guessAccuracy = config.strings.lowGuess;
@@ -79,8 +85,11 @@
             }
             this.set('guessAccuracy', guessAccuracy);
         },
-        handleRightGuess: function (secretNumber) {
-            vent.trigger('game:result', 'win', secretNumber);
+        handleRightGuess: function (guess, secretNumber) {
+            vent.trigger('game:result', {
+                result: 'win',
+                secretNumber: secretNumber
+            });
             this.set('guessAccuracy', config.strings.rightGuess);
         }
     });
@@ -99,13 +108,9 @@
                 el: this.$('#tiles')
             });
             this.listenTo(vent, 'game:start', this.show);
-            this.listenTo(vent, 'game:result', this.onGameResult);
         },
         show: function () {
             this.$el.expose();
-        },
-        onGameResult: function () {
-            console.log('result');
         }
     });
 
@@ -152,40 +157,39 @@
 
     var TileView = Backbone.View.extend({
         className: 'tile',
-        states: ['visited', 'match'],
         events: {
             'click a': 'onClick'
         },
+        states: ['visited', 'match'],
         initialize: function (options) {
             this.tileLinkView = new TileLinkView(options);
             this.$el.append(this.tileLinkView.el);
             this.listenTo(vent, 'game:start', this.onGameStart);
-            this.listenTo(vent, 'game:result', this.onGameResult);
             this.render();
-        },
-        onGameStart: function () {
-            var states = this.states.join(' ');
-            this.$el.removeClass(states);
-            this.tileLinkView.$el.removeClass(states);
         },
         onClick: function (e) {
             var state = this.states[0],
-                guess = parseInt(this.tileLinkView.$el.text(), 10);
+                guess = parseInt(this.$el.text(), 10),
+                self = this;
             e.preventDefault();
-            this.$el.addClass(state);
-            this.tileLinkView.$el.addClass(state);
+            this.$el.addClass(state).find('a.tile').addClass(state);
+            this.listenTo(vent, 'game:result', function (data) {
+                self.onGameResult($(e.target), data.result);
+            });
             vent.trigger('game:guess', guess);
         },
-        onGameResult: function (result, secretNumber) {
-            this.handleResult(result);
+        onGameStart: function () {
+            var states = this.states.join(' ');
+            this.$el.removeClass(states).find('a.tile').removeClass(states);
+        },
+        onGameResult: function ($eventTarget, result) {
+            this.handleResult($eventTarget, result);
             if (result === 'win') {
-                this.handleWin();
-            } else {
-                this.handleLose();
+                this.handleWin($eventTarget);
             }
         },
-        handleResult: function (result) {
-            this.tileLinkView.$el
+        handleResult: function ($eventTarget, result) {
+            $eventTarget
                 .unbind('click')
                 .attr('rel', '#' + result)
                 .overlay(
@@ -196,13 +200,16 @@
                     )
                 );
         },
-        handleWin: function () {
+        handleWin: function ($eventTarget) {
             var stateToRemove = this.states[0],
                 stateToAdd = this.states[1];
-            this.$el.removeClass(stateToRemove).addClass(stateToAdd);
-            this.tileLinkView.$el.removeClass(stateToRemove).addClass(stateToAdd);
-        },
-        handleLose: function () {}
+            $eventTarget
+                .removeClass(stateToRemove)
+                .addClass(stateToAdd)
+                .parent('.tile')
+                .removeClass(stateToRemove)
+                .addClass(stateToAdd);
+        }
     });
 
     var TilesView = Backbone.View.extend({
@@ -218,18 +225,8 @@
         }
     });
 
-    var PlayButtonView = Backbone.View.extend({
-        events: {
-            'click': 'onClick'
-        },
-        onClick: function (e) {
-            e.preventDefault();
-            vent.trigger('game:start');
-        }
-    });
-
     var DialogView = Backbone.View.extend({
-        initialize: function () {
+        initialize: function (options) {
             var id = this.$el.attr('id');
             if (id === 'splash') {
                 this.$el
@@ -245,6 +242,11 @@
             }
             this.listenTo(vent, 'dialog:show', this.show);
             this.listenTo(vent, 'game:start', this.closeOverlay);
+            if (options.isPlayButton) {
+                return new PlayButtonView({
+                    el: this.$('a[href="#play"]')
+                });
+            }
         },
         show: function (id) {
             this.openOverlay();
@@ -265,11 +267,18 @@
     });
 
     var SplashView = DialogView.extend({
-        initialize: function () {
-            this._super();
-            return new PlayButtonView({
-                el: this.$('a[href="#play"]')
-            });
+        initialize: function (options) {
+            this._super(options);
+        }
+    });
+
+    var PlayButtonView = Backbone.View.extend({
+        events: {
+            'click': 'onClick'
+        },
+        onClick: function (e) {
+            e.preventDefault();
+            vent.trigger('game:start');
         }
     });
 
@@ -296,13 +305,13 @@
     });
 
     var ResultView = DialogView.extend({
-        initialize: function () {
-            this._super();
+        initialize: function (options) {
+            this._super(options);
             this.listenTo(vent, 'game:result', this.show);
         },
-        show: function (result, secretNumber) {
-            this._super(result);
-            this.$('span.secret-number').html(secretNumber);
+        show: function (data) {
+            this._super(data.result);
+            this.$('span.secret-number').html(data.secretNumber);
         }
     });
 
@@ -348,7 +357,8 @@
         switch (id) {
             case 'splash':
                 view = new SplashView({
-                    el: $el
+                    el: $el,
+                    isPlayButton: true
                 });
                 break;
             case 'settings':
@@ -360,7 +370,8 @@
             case 'win':
             case 'lose':
                 view = new ResultView({
-                    el: $el
+                    el: $el,
+                    isPlayButton: true
                 });
                 break;
             default:
