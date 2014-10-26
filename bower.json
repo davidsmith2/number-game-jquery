@@ -1,0 +1,41 @@
+{
+  "name": "numbers-up",
+  "version": "0.0.0",
+  "homepage": "https://github.com/davidsmith2/numbers-up",
+  "description": "An interactive number-guessing game made with HTML, CSS, JavaScript, jQuery and the jQuery Tools UI library",
+  "keywords": [
+    "HTML",
+    "CSS",
+    "JavaScript",
+    "jQuery",
+    "jQuery",
+    "Tools"
+  ],
+  "authors": [
+    "David Smith"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "1.9.1",
+    "jquery.tools": "1.2.7",
+    "jquery.migrate": "~1.2.1"
+  },
+  "install": {
+    "path": "src/scripts/lib/vendor",
+    "sources": {
+      "jquery": "bower_components/jquery/jquery.js",
+      "jquery.migrate": "bower_components/jquery.migrate/jquery-migrate-1.2.1.js",
+      "jquery.tools": [
+        "bower_components/jquery.tools/src/overlay/overlay.js",
+        "bower_components/jquery.tools/src/toolbox/toolbox.expose.js"
+      ]
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "name": "numbers-up",
+  "version": "0.0.0",
+  "description": "An interactive number-guessing game made with HTML, CSS, JavaScript, jQuery and the jQuery Tools UI library",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "bower install && bower-installer"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davidsmith2/numbers-up.git"
+  },
+  "keywords": [
+    "HTML",
+    "CSS",
+    "JavaScript",
+    "jQuery",
+    "jQuery",
+    "Tools"
+  ],
+  "author": "David Smith",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/davidsmith2/numbers-up/issues"
+  },
+  "homepage": "https://github.com/davidsmith2/numbers-up",
+  "devDependencies": {
+    "bower": "^1.3.12",
+    "bower-installer": "^0.8.4"
+  }
+}
