@@ -1,7 +1,5 @@
 (function ($, _, Backbone) {
 
-
-
     // config
 
     var config = {
@@ -10,48 +8,34 @@
             highTile: 100,
             guessesAllowed: 13
         },
-        ui: {
-            strings: {
-                highGuess: 'High',
-                lowGuess: 'Low',
-                rightGuess: 'Match'
+        strings: {
+            highGuess: 'High',
+            lowGuess: 'Low',
+            rightGuess: 'Match'
+        },
+        overlays: {
+            basic: {
+                closeOnClick:false,
+                mask: {
+                    color:'#333',
+                    loadSpeed:100,
+                    maskId: 'mask',
+                    opacity:0.75,
+                    zIndex:9998
+                },
+                oneInstance:false
             },
-            overlays: {
-                attributes: {
-                    basic: {
-                        closeOnClick:false,
-                        mask: {
-                            color:'#333',
-                            loadSpeed:100,
-                            maskId: 'mask',
-                            opacity:0.75,
-                            zIndex:9998
-                        },
-                        oneInstance:false
-                    },
-                    autoload: {
-                        load:true
-                    }
-                }
+            autoload: {
+                load:true
             }
         }
     };
-
-
 
     // vent
 
     var vent = _.extend({}, Backbone.Events);
 
-
-
     // models
-
-    var Player = Backbone.Model.extend({
-        defaults: {
-            name: ''
-        }
-    });
 
     var Game = Backbone.Model.extend({
         defaults: {
@@ -59,15 +43,12 @@
             guessAccuracy: null,
             guessesAllowed: config.settings.guessesAllowed,
             guessesMade: 0,
-            guessesRemaining: null
+            guessesRemaining: config.settings.guessesAllowed
         },
         initialize: function () {
             var secretNumber = this.generateSecretNumber(),
                 self = this;
-
-            console.log(secretNumber)
-
-            this.listenTo(vent, 'makeGuess', function (guess) {
+            this.listenTo(vent, 'game:guess', function (guess) {
                 self.handleGuess(guess);
                 if (self.get('guess') !== secretNumber) {
                     self.handleWrongGuess(guess, secretNumber);
@@ -89,32 +70,57 @@
         handleWrongGuess: function (guess, secretNumber) {
             var guessAccuracy;
             if (this.get('guessesRemaining') === 0) {
-                vent.trigger('result', 'lose', secretNumber);
+                vent.trigger('game:result', 'lose', secretNumber);
             }
             if (guess < secretNumber) {
-                guessAccuracy = config.ui.strings.lowGuess;
+                guessAccuracy = config.strings.lowGuess;
             } else if (guess > secretNumber) {
-                guessAccuracy = config.ui.strings.highGuess;
+                guessAccuracy = config.strings.highGuess;
             }
             this.set('guessAccuracy', guessAccuracy);
         },
         handleRightGuess: function (secretNumber) {
-            this.set('guessAccuracy', config.ui.strings.rightGuess);
+            this.set('guessAccuracy', config.strings.rightGuess);
+            vent.trigger('game:result', 'win', secretNumber);
             //isGameLeaderboardWorthy(game);
-            vent.trigger('result', 'win', secretNumber);
         }
     });
-
-
 
     // views
 
     var PlayingAreaView = Backbone.View.extend({
         initialize: function () {
-            this.listenTo(vent, 'startGame', this.show);
+            this.listenTo(vent, 'game:start', this.show);
         },
         show: function () {
             this.$el.expose();
+        }
+    });
+
+    var GaugesView = Backbone.View.extend({
+        ids: {
+            'guess'                : 'guess',
+            'guess-accuracy'       : 'guessAccuracy',
+            'guesses-allowed'      : 'guessesAllowed',
+            'guesses-made'         : 'guessesMade',
+            'guesses-remaining'    : 'guessesRemaining'
+        },
+        initialize: function () {
+            var self = this;
+            this.updateAll();
+            this.listenTo(vent, 'game:guess', this.updateAll);
+            this.model.on('change:guessesAllowed', function (model) {
+                self.update('guesses-allowed');
+                self.update('guesses-remaining');
+            });
+        },
+        updateAll: function () {
+            for (var id in this.ids) {
+                this.update(id);
+            }
+        },
+        update: function (id) {
+            this.$('#' + id + ' > .value').html(this.model.get(this.ids[id]));
         }
     });
 
@@ -136,11 +142,11 @@
         initialize: function (options) {
             this.tileLinkView = new TileLinkView(options);
             this.$el.append(this.tileLinkView.el);
-            this.listenTo(vent, 'startGame', this.onStartGame);
-            this.listenTo(vent, 'result', this.onGameResult);
+            this.listenTo(vent, 'game:start', this.onGameStart);
+            this.listenTo(vent, 'game:result', this.onGameResult);
             this.render();
         },
-        onStartGame: function () {
+        onGameStart: function () {
             var states = this.states.join(' ');
             this.$el.removeClass(states);
             this.tileLinkView.$el.removeClass(states);
@@ -151,7 +157,7 @@
             e.preventDefault();
             this.$el.addClass(state);
             this.tileLinkView.$el.addClass(state);
-            vent.trigger('makeGuess', guess);
+            vent.trigger('game:guess', guess);
         },
         onGameResult: function (result, secretNumber) {
             this.handleResult(result);
@@ -165,7 +171,7 @@
             this.tileLinkView.$el
                 .unbind('click')
                 .attr('rel', '#' + result)
-                .overlay(config.ui.overlays.attributes.autoload);
+                .overlay(config.overlays.autoload);
         },
         handleWin: function () {
             var stateToRemove = this.states[0],
@@ -196,15 +202,15 @@
                     .overlay(
                         $.extend(
                             {},
-                            config.ui.overlays.attributes.basic,
-                            config.ui.overlays.attributes.autoload
+                            config.overlays.basic,
+                            config.overlays.autoload
                         )
                     );
             } else {
-                this.$el.overlay(config.ui.overlays.attributes.basic);
+                this.$el.overlay(config.overlays.basic);
             }
-            this.listenTo(vent, 'showDialog', this.show);
-            this.listenTo(vent, 'startGame', this.closeOverlay);
+            this.listenTo(vent, 'dialog:show', this.show);
+            this.listenTo(vent, 'game:start', this.closeOverlay);
         },
         show: function (id) {
             this.openOverlay();
@@ -226,32 +232,34 @@
 
     var SettingsView = DialogView.extend({
         events: {
-            'change input[type=radio]': 'onChange'
+            'change input[type=radio]': 'onChange',
+            'click .button-red': 'onCancel'
         },
         onChange: function (e) {
-            this.model.set('guessesAllowed', $(e.target).attr('value'));
-        }
-    });
-
-    var ProfileView = DialogView.extend({
-        events: {
-            'blur input[type=text]': 'onBlur'
+            var guesses = $(e.target).attr('value');
+            this.model.set({
+                'guessesAllowed': guesses,
+                'guessesRemaining': guesses
+            });
         },
-        onBlur: function (e) {
-            this.model.set('name', $(e.target).val());
+        onCancel: function (e) {
+            var guesses = this.model.previousAttributes().guessesAllowed;
+            e.preventDefault();
+            this.model.set({
+                'guessesAllowed': guesses,
+                'guessesRemaining': guesses
+            });
         }
     });
 
     var ResultView = DialogView.extend({
         initialize: function () {
-            var self = this;
-            this.listenTo(vent, 'result', function (result, secretNumber) {
-                self.show(result);
-                self.showSecretNumber(secretNumber);
-            });
+            this._super();
+            this.listenTo(vent, 'game:result', this.show);
         },
-        showSecretNumber: function (secretNumber) {
-            this.$('span.secret-number').empty().append(secretNumber);
+        show: function (result, secretNumber) {
+            this._super(result);
+            this.$('span.secret-number').html(secretNumber);
         }
     });
 
@@ -261,14 +269,14 @@
         },
         initialize: function () {
             var self = this;
-            this.$el.attr('rel', this.$el.attr('href')).overlay(config.ui.overlays.attributes.basic);
+            this.$el.attr('rel', this.$el.attr('href')).overlay(config.overlays.basic);
         },
         onClick: function (e) {
             e.preventDefault();
             this.showDialog();
         },
         showDialog: function (e) {
-            vent.trigger('showDialog', this.$el.attr('href').slice(1));
+            vent.trigger('dialog:show', this.$el.attr('href').slice(1));
         }
     });
 
@@ -278,33 +286,43 @@
         },
         onClick: function (e) {
             e.preventDefault();
-            vent.trigger('startGame');
+            vent.trigger('game:start');
         }
     });
 
-
-
-
-
     // init code
 
-    var player = new Player();
+    var app = {};
+    app.models = {};
 
-    var game = new Game();
+    app.init = function () {
+        var playingAreaView,
+            gaugesView,
+            tilesView,
+            playButtonView;
 
-    var playingAreaView = new PlayingAreaView({
-        el: '#play'
-    });
+        // init models
+        app.models.game = new Game();
 
-    var tilesView =  new TilesView({
-        el: '#tiles'
-    });
+        // init views
+        playingAreaView = new PlayingAreaView({
+            el: '#play'
+        });
+        gaugesView = new GaugesView({
+            el: '#gauges',
+            model: app.models.game
+        });
+        tilesView =  new TilesView({
+            el: '#tiles'
+        });
+        playButtonView = new PlayButtonView({
+            el: $('a[href="#play"]')
+        });
+        $('div.dialog').each(app.initDialogs);
+        $('a.dialog').each(app.initDialogTriggers);
+    };
 
-    var playButtonView = new PlayButtonView({
-        el: $('a[href="#play"]')
-    });
-
-    $('div.dialog').each(function () {
+    app.initDialogs = function () {
         var $el = $(this),
             id = $el.attr('id'),
             view;
@@ -312,13 +330,7 @@
             case 'settings':
                 view = new SettingsView({
                     el: $el,
-                    model: game
-                });
-                break;
-            case 'profile':
-                view = new ProfileView({
-                    el: $el,
-                    model: player
+                    model: app.models.game
                 });
                 break;
             case 'win':
@@ -333,16 +345,16 @@
                 });
         }
         return view;
-    });
 
-    $('a.dialog').each(function () {
+    };
+
+    app.initDialogTriggers = function () {
         return new DialogTriggerView({
             el: $(this)
         });
-    });
 
+    };
 
-
-
+    app.init();
 
 }(jQuery, _, Backbone));

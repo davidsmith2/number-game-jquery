@@ -24,7 +24,7 @@ html(lang=en)
                                 span.label Made
                                 span.value
                             #guesses-remaining
-                                span.label Low/High
+                                span.label Remaining
                                 span.value
                         #tiles
                         .buttons
@@ -44,8 +44,6 @@ html(lang=en)
                                         | Play
                                     a.button.button-yellow.dialog(href="#settings")
                                         | Settings
-                                    a.button.button-blue.dialog(href="#profile")
-                                        | Profile
                         #settings.dialog
                             .dialog-content
                                 h1 Settings
@@ -66,20 +64,6 @@ html(lang=en)
                                         | OK
                                     a.button.button-red.dialog(href='#splash')
                                         | Cancel
-                        #profile.dialog
-                            .dialog-content
-                                h1 Your Profile
-                                form#profile-form
-                                    fieldset
-                                        legend Personal Information
-                                        label
-                                            | Name: 
-                                            input.width-50(placeholder='A. User', type='text')
-                                .buttons
-                                    a.button.button-green.dialog(href="#splash")
-                                        | OK
-                                    a.button.button-red.dialog(href="#splash")
-                                        | Cancel
                         #win.dialog
                             .dialog-content
                                 h1 Well Done!
@@ -89,8 +73,6 @@ html(lang=en)
                                 .buttons
                                     a.button.button-green(href='#play')
                                         | Replay
-                                    a.button.button-blue.dialog(href='#leaderboard')
-                                        | Leaderboard
                                     a.button.button-red.dialog(href="#splash")
                                         | Exit
                         #lose.dialog
@@ -101,35 +83,6 @@ html(lang=en)
                                     span.secret-number
                                 .buttons
                                     a.button.button-green(href='#play')
-                                        | Replay
-                                    a.button.button-blue.dialog(href='#leaderboard')
-                                        | Leaderboard
-                                    a.button.button-red.dialog(href="#splash")
-                                        | Exit
-                        #leaderboard.dialog
-                            .dialog-content
-                                h1 Leaderboard
-                                table(cellspacing='0', id='leaderboard-table')
-                                    thead
-                                        tr
-                                            th Name
-                                            th Guesses Allowed
-                                            th Guesses Made
-                                    tbody
-                                        tr
-                                            td Peter Peterson
-                                            td 7
-                                            td 7
-                                        tr
-                                            td Andrei Andreev
-                                            td 10
-                                            td 10
-                                        tr
-                                            td Nick Nixon
-                                            td 13
-                                            td 13
-                                .buttons
-                                    a.button.button-green.dialog(href='#play')
                                         | Replay
                                     a.button.button-red.dialog(href="#splash")
                                         | Exit
