@@ -74,6 +74,7 @@
             var guessAccuracy;
             if (this.get('guessesRemaining') === 0) {
                 vent.trigger('game:result', {
+                    guess: guess,
                     result: 'lose',
                     secretNumber: secretNumber
                 });
@@ -87,6 +88,7 @@
         },
         handleRightGuess: function (guess, secretNumber) {
             vent.trigger('game:result', {
+                guess: guess,
                 result: 'win',
                 secretNumber: secretNumber
             });
@@ -157,62 +159,17 @@
 
     var TileView = Backbone.View.extend({
         className: 'tile',
-        events: {
-            'click a': 'onClick'
-        },
-        states: ['visited', 'match'],
         initialize: function (options) {
-            this.tileLinkView = new TileLinkView(options);
-            this.$el.append(this.tileLinkView.el);
-            this.listenTo(vent, 'game:start', this.onGameStart);
+            this.$el.append(new TileLinkView(options).el);
             this.render();
-        },
-        onClick: function (e) {
-            var state = this.states[0],
-                guess = parseInt(this.$el.text(), 10),
-                self = this;
-            e.preventDefault();
-            this.$el.addClass(state).find('a.tile').addClass(state);
-            this.listenTo(vent, 'game:result', function (data) {
-                self.onGameResult($(e.target), data.result);
-            });
-            vent.trigger('game:guess', guess);
-        },
-        onGameStart: function () {
-            var states = this.states.join(' ');
-            this.$el.removeClass(states).find('a.tile').removeClass(states);
-        },
-        onGameResult: function ($eventTarget, result) {
-            this.handleResult($eventTarget, result);
-            if (result === 'win') {
-                this.handleWin($eventTarget);
-            }
-        },
-        handleResult: function ($eventTarget, result) {
-            $eventTarget
-                .unbind('click')
-                .attr('rel', '#' + result)
-                .overlay(
-                    $.extend(
-                        {},
-                        config.overlays.manual,
-                        config.overlays.auto
-                    )
-                );
-        },
-        handleWin: function ($eventTarget) {
-            var stateToRemove = this.states[0],
-                stateToAdd = this.states[1];
-            $eventTarget
-                .removeClass(stateToRemove)
-                .addClass(stateToAdd)
-                .parent('.tile')
-                .removeClass(stateToRemove)
-                .addClass(stateToAdd);
         }
     });
 
     var TilesView = Backbone.View.extend({
+        events: {
+            'click a': 'onClick'
+        },
+        states: ['visited', 'match'],
         initialize: function () {
             var lowTile = config.settings.lowTile,
                 highTile = config.settings.highTile;
@@ -221,6 +178,46 @@
                     number: i
                 });
                 this.$el.append(tileView.el);
+            }
+            this.listenTo(vent, 'game:start', this.onGameStart);
+            this.listenTo(vent, 'game:result', this.onGameResult);
+        },
+        onClick: function (e) {
+            e.preventDefault();
+            this.onGuess($(e.target));
+        },
+        onGuess: function ($eventTarget) {
+            var state = this.states[0],
+                guess = parseInt($eventTarget.text(), 10);
+            $eventTarget.addClass(state).parent('.tile').addClass(state);
+            vent.trigger('game:guess', guess);
+        },
+        onGameStart: function () {
+            var states = this.states.join(' ');
+            this.$('.tile').removeClass(states);
+        },
+        onGameResult: function (data) {
+            var stateToRemove = this.states[0],
+                stateToAdd = this.states[1],
+                $eventTarget = this.$('a[href=#' + data.guess + ']');
+            $eventTarget
+                .unbind('click')
+                .attr('rel', '#' + data.result)
+                .overlay(
+                    $.extend(
+                        {},
+                        config.overlays.manual,
+                        config.overlays.auto
+                    )
+                );
+            if (data.result === 'win') {
+                $eventTarget
+                    .removeClass(stateToRemove)
+                    .addClass(stateToAdd)
+                    .parent('div')
+                    .removeClass(stateToRemove)
+                    .addClass(stateToAdd);
+
             }
         }
     });
