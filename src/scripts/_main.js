@@ -85,7 +85,7 @@
                     result: 'lose',
                     secretNumber: secretNumber
                 });
-                app.vent.trigger('game:result');
+                app.result();
             }
             if (guess < secretNumber) {
                 guessAccuracy = config.strings.lowGuess;
@@ -100,7 +100,7 @@
                 result: 'win',
                 secretNumber: secretNumber
             });
-            app.vent.trigger('game:result');
+            app.result();
         }
     });
 
@@ -212,7 +212,7 @@
             var state = this.states[0],
                 guess = parseInt($eventTarget.text(), 10);
             $eventTarget.addClass(state).parent('.tile').addClass(state);
-            app.vent.trigger('game:guess', guess);
+            app.guess(guess);
         },
         onStartGame: function () {
             var states = this.states.join(' ');
@@ -258,7 +258,7 @@
             } else {
                 this.$el.overlay(config.overlays.manual);
             }
-            this.listenTo(app.vent, 'dialog:show', this.show);
+            this.listenTo(app.vent, 'game:showDialog', this.show);
             this.listenTo(app.vent, 'game:play', this.closeOverlay);
         },
         show: function (id) {
@@ -351,7 +351,7 @@
             this.showDialog();
         },
         showDialog: function (e) {
-            app.vent.trigger('dialog:show', this.$el.attr('href').slice(1));
+            app.showDialog(this.$el.attr('href').slice(1));
         }
     });
 
@@ -392,13 +392,22 @@
         play: function () {
             this.vent.trigger('game:play');
         },
-        quit: function () {
-            this.vent.trigger('game:quit');
+        guess: function (guess) {
+            this.vent.trigger('game:guess', guess);
+        },
+        result: function () {
+            this.vent.trigger('game:result');
         },
         replay: function (game) {
             this.models.game = game;
             this.play();
             this.vent.trigger('game:replay');
+        },
+        quit: function () {
+            this.vent.trigger('game:quit');
+        },
+        showDialog: function (id) {
+            this.vent.trigger('game:showDialog', id);
         }
     };
 
@@ -406,5 +415,6 @@
 
     var app = new App();
     app.init();
+
 
 }(jQuery, _, Backbone));
