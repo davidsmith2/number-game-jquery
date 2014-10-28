@@ -46,17 +46,14 @@
 
 
 
-
-
             console.log(this.secretNumber);
 
 
 
-
-
-            this.on('change:guessesAllowed', this.onChangeGuessesAllowed, this);
-            this.listenTo(app.vent, 'game:guess', this.handleGuess);
             this.set('guessesRemaining', this.get('guessesAllowed'));
+            this.on('change:guessesAllowed', this.onChangeGuessesAllowed, this);
+            this.listenTo(app.vent, 'game:guess', this.onGuess);
+            this.listenTo(app.vent, 'game:quit', this.onQuit);
         },
         onChangeGuessesAllowed: function (game) {
             var guessesAllowed = game.get('guessesAllowed');
@@ -67,25 +64,21 @@
                 highTile = config.settings.highTile;
             return Math.floor(Math.random() * (highTile - lowTile + 1)) + lowTile;
         },
-        handleGuess: function (guess) {
+        onGuess: function (guess) {
             var secretNumber = this.secretNumber;
             this.set('guess', guess);
             this.set('guessesMade', this.get('guessesMade') + 1);
             this.set('guessesRemaining', this.get('guessesAllowed') - this.get('guessesMade'));
             if (guess !== secretNumber) {
-                this.handleWrongGuess(guess, secretNumber);
+                this.onWrongGuess(guess, secretNumber);
             } else {
-                this.handleRightGuess(guess, secretNumber);
+                this.onRightGuess(guess, secretNumber);
             }
         },
-        handleWrongGuess: function (guess, secretNumber) {
+        onWrongGuess: function (guess, secretNumber) {
             var guessAccuracy;
             if (this.get('guessesRemaining') === 0) {
-                this.set({
-                    result: 'lose',
-                    secretNumber: secretNumber
-                });
-                app.result();
+                app.result('lose', secretNumber);
             }
             if (guess < secretNumber) {
                 guessAccuracy = config.strings.lowGuess;
@@ -94,34 +87,31 @@
             }
             this.set('guessAccuracy', guessAccuracy);
         },
-        handleRightGuess: function (guess, secretNumber) {
-            this.set({
-                guessAccuracy: config.strings.guessAccuracy,
-                result: 'win',
-                secretNumber: secretNumber
-            });
-            app.result();
-        }
+        onRightGuess: function (guess, secretNumber) {
+            this.set('guessAccuracy', config.strings.guessAccuracy);
+            app.result('win', secretNumber);
+        },
+        onQuit: function () {}
     });
 
     // views
 
     var PlayingAreaView = Backbone.View.extend({
         events: {
-            'click a[href=#splash]': 'quitGame'
+            'click a[href=#splash]': 'quit'
         },
         initialize: function () {
             this.initTiles();
-            this.listenTo(app.vent, 'game:start', this.onStartGame);
-            this.listenTo(app.vent, 'game:play', this.onPlayGame);
+            this.listenTo(app.vent, 'game:start', this.onStart);
+            this.listenTo(app.vent, 'game:play', this.onPlay);
         },
-        onStartGame: function () {
+        onStart: function () {
             this.initGauges();
         },
-        onPlayGame: function () {
+        onPlay: function () {
             this.$el.expose();
         },
-        quitGame: function (e) {
+        quit: function (e) {
             e.preventDefault();
             app.quit();
         },
@@ -201,8 +191,8 @@
                 });
                 this.$el.append(tileView.el);
             }
-            this.listenTo(app.vent, 'game:play', this.onStartGame);
-            this.listenTo(app.vent, 'game:result', this.onFinishGame);
+            this.listenTo(app.vent, 'game:play', this.onPlay);
+            this.listenTo(app.vent, 'game:result', this.onResult);
         },
         onClick: function (e) {
             e.preventDefault();
@@ -214,17 +204,15 @@
             $eventTarget.addClass(state).parent('.tile').addClass(state);
             app.guess(guess);
         },
-        onStartGame: function () {
+        onPlay: function () {
             var states = this.states.join(' ');
             this.$('.tile').removeClass(states);
         },
-        onFinishGame: function () {
-            var stateToRemove = this.states[0],
-                stateToAdd = this.states[1],
-                $eventTarget = this.$('a[href=#' + app.models.game.get('guess') + ']');
+        onResult: function (result) {
+            var $eventTarget = this.$('a[href=#' + app.models.game.get('guess') + ']');
             $eventTarget
                 .unbind('click')
-                .attr('rel', '#' + app.models.game.get('result'))
+                .attr('rel', '#' + result)
                 .overlay(
                     $.extend(
                         {},
@@ -232,14 +220,19 @@
                         config.overlays.auto
                     )
                 );
-            if (app.models.game.get('result') === 'win') {
-                $eventTarget
-                    .removeClass(stateToRemove)
-                    .addClass(stateToAdd)
-                    .parent('.tile')
-                    .removeClass(stateToRemove)
-                    .addClass(stateToAdd);
+            if (result === 'win') {
+                this.onWin($eventTarget);
             }
+        },
+        onWin: function ($eventTarget) {
+            var stateToRemove = this.states[0],
+                stateToAdd = this.states[1];
+            $eventTarget
+                .removeClass(stateToRemove)
+                .addClass(stateToAdd)
+                .parent('.tile')
+                .removeClass(stateToRemove)
+                .addClass(stateToAdd);
         }
     });
 
@@ -258,15 +251,21 @@
             } else {
                 this.$el.overlay(config.overlays.manual);
             }
-            this.listenTo(app.vent, 'game:showDialog', this.show);
-            this.listenTo(app.vent, 'game:play', this.closeOverlay);
+            this.listenTo(app.vent, 'game:dialog', this.onDialog);
+            this.listenTo(app.vent, 'game:play', this.onPlay);
         },
-        show: function (id) {
+        onDialog: function (id) {
             this.openOverlay();
-            if (this.$el.attr('id') === id) {
-                this.$el.show();
-            } else {
+            this.openDialog(id);
+        },
+        onPlay: function () {
+            this.closeOverlay();
+        },
+        openDialog: function (id) {
+            if (this.$el.attr('id') !== id) {
                 this.$el.hide();
+            } else {
+                this.$el.show();
             }
         },
         openOverlay: function () {
@@ -297,9 +296,9 @@
         },
         initialize: function () {
             this._super();
-            this.listenTo(app.vent, 'game:start', this.initForm);
+            this.listenTo(app.vent, 'game:start', this.onStart);
         },
-        initForm: function () {
+        onStart: function () {
             var guessesAllowed = app.models.game.get('guessesAllowed');
             this.$('input[value=' + guessesAllowed + ']').prop('checked', true);
         },
@@ -312,23 +311,23 @@
             app.play();
         },
         quit: function (e) {
-            var guessesAllowed = app.models.game.previousAttributes().guessesAllowed;
             e.preventDefault();
-            app.models.game.set('guessesAllowed', guessesAllowed);
+            app.quit();
         }
     });
 
     var ResultView = DialogView.extend({
         events: {
-            'click [href=#play]': 'replay'
+            'click [href=#play]': 'replay',
+            'click [href=#splash]': 'quit'
         },
         initialize: function (options) {
             this._super(options);
-            this.listenTo(app.vent, 'game:result', this.showResult);
+            this.listenTo(app.vent, 'game:result', this.onResult);
         },
-        showResult: function () {
-            this.show(app.models.game.get('result'));
-            this.$('span.secret-number').html(app.models.game.get('secretNumber'));
+        onResult: function (result, secretNumber) {
+            app.dialog(result);
+            this.$('span.secret-number').html(secretNumber);
         },
         replay: function (e) {
             var guessesAllowed, game;
@@ -336,6 +335,10 @@
             guessesAllowed = app.models.game.get('guessesAllowed');
             game = new Game({guessesAllowed: guessesAllowed});
             app.replay(game);
+        },
+        quit: function (e) {
+            e.preventDefault();
+            app.quit();
         }
     });
 
@@ -348,10 +351,7 @@
         },
         onClick: function (e) {
             e.preventDefault();
-            this.showDialog();
-        },
-        showDialog: function (e) {
-            app.showDialog(this.$el.attr('href').slice(1));
+            app.dialog(this.$el.attr('href').slice(1));
         }
     });
 
@@ -364,6 +364,7 @@
         views: {},
         vent: _.extend({}, Backbone.Events),
         init: function () {
+            console.log('game:init');
             this.views.playingArea =  new PlayingAreaView({
                 el: $('#play')
             });
@@ -386,28 +387,34 @@
             });
         },
         start: function (game) {
+            console.log('game:start');
             this.models.game = game;
             this.vent.trigger('game:start');
         },
         play: function () {
+            console.log('game:play');
             this.vent.trigger('game:play');
         },
         guess: function (guess) {
+            console.log('game:guess');
             this.vent.trigger('game:guess', guess);
         },
-        result: function () {
-            this.vent.trigger('game:result');
+        result: function (result, secretNumber) {
+            console.log('game:result');
+            this.vent.trigger('game:result', result, secretNumber);
         },
         replay: function (game) {
+            console.log('game:replay');
             this.models.game = game;
             this.play();
             this.vent.trigger('game:replay');
         },
         quit: function () {
+            console.log('game:quit');
             this.vent.trigger('game:quit');
         },
-        showDialog: function (id) {
-            this.vent.trigger('game:showDialog', id);
+        dialog: function (id) {
+            this.vent.trigger('game:dialog', id);
         }
     };
 
