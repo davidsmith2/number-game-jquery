@@ -42,18 +42,22 @@
             guessesRemaining: null
         },
         initialize: function () {
-            this.secretNumber = this.getSecretNumber();
+            var secretNumber = this.getSecretNumber(),
+                self = this;
 
 
 
-            console.log(this.secretNumber);
+            console.log(secretNumber);
 
 
 
             this.set('guessesRemaining', this.get('guessesAllowed'));
             this.on('change:guessesAllowed', this.onChangeGuessesAllowed, this);
-            this.listenTo(app.vent, 'game:guess', this.onGuess);
+            this.listenTo(app.vent, 'game:guess', function (guess) {
+                self.onGuess(guess, secretNumber);
+            });
             this.listenTo(app.vent, 'game:quit', this.onQuit);
+            this.listenTo(app.vent, 'game:result', this.onResult);
         },
         onChangeGuessesAllowed: function (game) {
             var guessesAllowed = game.get('guessesAllowed');
@@ -64,8 +68,7 @@
                 highTile = config.settings.highTile;
             return Math.floor(Math.random() * (highTile - lowTile + 1)) + lowTile;
         },
-        onGuess: function (guess) {
-            var secretNumber = this.secretNumber;
+        onGuess: function (guess, secretNumber) {
             this.set('guess', guess);
             this.set('guessesMade', this.get('guessesMade') + 1);
             this.set('guessesRemaining', this.get('guessesAllowed') - this.get('guessesMade'));
@@ -74,6 +77,7 @@
             } else {
                 this.onRightGuess(guess, secretNumber);
             }
+            app.guessed();
         },
         onWrongGuess: function (guess, secretNumber) {
             var guessAccuracy;
@@ -91,7 +95,11 @@
             this.set('guessAccuracy', config.strings.guessAccuracy);
             app.result('win', secretNumber);
         },
-        onQuit: function () {}
+        onQuit: function () {},
+        onResult: function () {
+            this.clear().set(this.defaults);
+            this.stopListening();
+        }
     });
 
     // views
@@ -139,7 +147,8 @@
             var self = this;
             this.updateAll();
             this.listenTo(app.vent, 'game:play', this.updateAll);
-            this.listenTo(app.vent, 'game:guess', this.updateAll);
+            this.listenTo(app.vent, 'game:guessed', this.updateAll);
+            this.listenTo(app.vent, 'game:result', this.updateAll);
             app.models.game.on('change:guessesAllowed', function (game) {
                 self.update('guesses-allowed');
                 self.update('guesses-remaining');
@@ -211,7 +220,6 @@
         onResult: function (result) {
             var $eventTarget = this.$('a[href=#' + app.models.game.get('guess') + ']');
             $eventTarget
-                .unbind('click')
                 .attr('rel', '#' + result)
                 .overlay(
                     $.extend(
@@ -219,7 +227,8 @@
                         config.overlays.manual,
                         config.overlays.auto
                     )
-                );
+                )
+                .removeAttr('rel');
             if (result === 'win') {
                 this.onWin($eventTarget);
             }
@@ -297,7 +306,7 @@
         },
         start: function (e) {
             e.preventDefault();
-            app.start(new Game());
+            app.start();
         }
     });
 
@@ -346,8 +355,7 @@
             var guessesAllowed, game;
             e.preventDefault();
             guessesAllowed = app.models.game.get('guessesAllowed');
-            game = new Game({guessesAllowed: guessesAllowed});
-            app.replay(game);
+            app.replay(guessesAllowed);
         },
         quit: function (e) {
             e.preventDefault();
@@ -388,7 +396,7 @@
         },
         start: function (game) {
             console.log('game:start');
-            this.models.game = game;
+            this.models.game = new Game();
             this.vent.trigger('game:start');
         },
         play: function () {
@@ -399,15 +407,20 @@
             console.log('game:guess');
             this.vent.trigger('game:guess', guess);
         },
+        guessed: function (guess) {
+            console.log('game:guessed');
+            this.vent.trigger('game:guessed');
+        },
         result: function (result, secretNumber) {
             console.log('game:result');
             this.vent.trigger('game:result', result, secretNumber);
         },
-        replay: function (game) {
+        replay: function (guessesAllowed) {
             console.log('game:replay');
-            this.models.game = game;
+            this.models.game = new Game({
+                guessesAllowed: guessesAllowed
+            });
             this.play();
-            this.vent.trigger('game:replay');
         },
         quit: function () {
             console.log('game:quit');
