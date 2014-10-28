@@ -31,53 +31,53 @@
         }
     };
 
-    // vent
-
-    var vent = _.extend({}, Backbone.Events);
-
     // models
 
     var Game = Backbone.Model.extend({
         defaults: {
-            guess: null,
-            guessAccuracy: null,
+            guess: '-',
+            guessAccuracy: '-',
             guessesAllowed: config.settings.guessesAllowed,
             guessesMade: 0,
-            guessesRemaining: config.settings.guessesAllowed
+            guessesRemaining: null
         },
         initialize: function () {
-            var secretNumber = this.generateSecretNumber(),
-                self = this;
+            this.secretNumber = this.getSecretNumber();
 
-            console.log(secretNumber)
+            console.log(this.secretNumber)
 
-            this.listenTo(vent, 'game:guess', function (guess) {
-                self.handleGuess(guess);
-                if (self.get('guess') !== secretNumber) {
-                    self.handleWrongGuess(guess, secretNumber);
-                } else {
-                    self.handleRightGuess(guess, secretNumber);
-                }
-            });
+            this.on('change:guessesAllowed', this.onChangeGuessesAllowed, this);
+            this.listenTo(app.vent, 'game:guess', this.handleGuess);
+            this.set('guessesRemaining', this.get('guessesAllowed'));
         },
-        generateSecretNumber: function () {
+        onChangeGuessesAllowed: function (game) {
+            var guessesAllowed = game.get('guessesAllowed');
+            this.set('guessesRemaining', guessesAllowed);
+        },
+        getSecretNumber: function () {
             var lowTile = config.settings.lowTile,
                 highTile = config.settings.highTile;
             return Math.floor(Math.random() * (highTile - lowTile + 1)) + lowTile;
         },
         handleGuess: function (guess) {
+            var secretNumber = this.secretNumber;
             this.set('guess', guess);
             this.set('guessesMade', this.get('guessesMade') + 1);
             this.set('guessesRemaining', this.get('guessesAllowed') - this.get('guessesMade'));
+            if (guess !== secretNumber) {
+                this.handleWrongGuess(guess, secretNumber);
+            } else {
+                this.handleRightGuess(guess, secretNumber);
+            }
         },
         handleWrongGuess: function (guess, secretNumber) {
             var guessAccuracy;
             if (this.get('guessesRemaining') === 0) {
-                vent.trigger('game:result', {
-                    guess: guess,
+                this.set({
                     result: 'lose',
                     secretNumber: secretNumber
                 });
+                app.vent.trigger('game:result');
             }
             if (guess < secretNumber) {
                 guessAccuracy = config.strings.lowGuess;
@@ -87,32 +87,42 @@
             this.set('guessAccuracy', guessAccuracy);
         },
         handleRightGuess: function (guess, secretNumber) {
-            vent.trigger('game:result', {
-                guess: guess,
+            this.set({
+                guessAccuracy: config.strings.guessAccuracy,
                 result: 'win',
                 secretNumber: secretNumber
             });
-            this.set('guessAccuracy', config.strings.rightGuess);
+            app.vent.trigger('game:result');
         }
     });
 
     // views
 
     var PlayingAreaView = Backbone.View.extend({
+        events: {
+            'click a[href=#splash]': 'onQuitGame'
+        },
         initialize: function () {
-            var gaugesView,
-                tilesView;
-            gaugesView = new GaugesView({
-                el: this.$('#gauges'),
-                model: app.models.game
-            });
-            tilesView =  new TilesView({
+            this.initTiles();
+            this.initGauges();
+            this.listenTo(app.vent, 'game:start', this.onStartGame);
+        },
+        initTiles: function () {
+            return new TilesView({
                 el: this.$('#tiles')
             });
-            this.listenTo(vent, 'game:start', this.show);
         },
-        show: function () {
+        initGauges: function () {
+            return new GaugesView({
+                el: this.$('#gauges')
+            });
+        },
+        onStartGame: function () {
             this.$el.expose();
+        },
+        onQuitGame: function (e) {
+            e.preventDefault();
+            app.vent.trigger('game:quit');
         }
     });
 
@@ -127,8 +137,9 @@
         initialize: function () {
             var self = this;
             this.updateAll();
-            this.listenTo(vent, 'game:guess', this.updateAll);
-            this.model.on('change:guessesAllowed', function (model) {
+            this.listenTo(app.vent, 'game:start', this.updateAll);
+            this.listenTo(app.vent, 'game:guess', this.updateAll);
+            app.models.game.on('change:guessesAllowed', function (game) {
                 self.update('guesses-allowed');
                 self.update('guesses-remaining');
             });
@@ -140,8 +151,8 @@
         },
         update: function (id) {
             var $el = this.$('#' + id + ' > .value'),
-                guessAccuracy = this.model.get('guessAccuracy');
-            $el.html(this.model.get(this.ids[id]));
+                guessAccuracy = app.models.game.get('guessAccuracy');
+            $el.html(app.models.game.get(this.ids[id]));
             if (guessAccuracy && id === 'guess-accuracy') {
                 $el.removeClass().addClass('value ' + guessAccuracy.toLowerCase());
             }
@@ -179,8 +190,8 @@
                 });
                 this.$el.append(tileView.el);
             }
-            this.listenTo(vent, 'game:start', this.onGameStart);
-            this.listenTo(vent, 'game:result', this.onGameResult);
+            this.listenTo(app.vent, 'game:start', this.onStartGame);
+            this.listenTo(app.vent, 'game:result', this.onFinishGame);
         },
         onClick: function (e) {
             e.preventDefault();
@@ -190,19 +201,19 @@
             var state = this.states[0],
                 guess = parseInt($eventTarget.text(), 10);
             $eventTarget.addClass(state).parent('.tile').addClass(state);
-            vent.trigger('game:guess', guess);
+            app.vent.trigger('game:guess', guess);
         },
-        onGameStart: function () {
+        onStartGame: function () {
             var states = this.states.join(' ');
             this.$('.tile').removeClass(states);
         },
-        onGameResult: function (data) {
+        onFinishGame: function () {
             var stateToRemove = this.states[0],
                 stateToAdd = this.states[1],
-                $eventTarget = this.$('a[href=#' + data.guess + ']');
+                $eventTarget = this.$('a[href=#' + app.models.game.get('guess') + ']');
             $eventTarget
                 .unbind('click')
-                .attr('rel', '#' + data.result)
+                .attr('rel', '#' + app.models.game.get('result'))
                 .overlay(
                     $.extend(
                         {},
@@ -210,14 +221,13 @@
                         config.overlays.auto
                     )
                 );
-            if (data.result === 'win') {
+            if (app.models.game.get('result') === 'win') {
                 $eventTarget
                     .removeClass(stateToRemove)
                     .addClass(stateToAdd)
-                    .parent('div')
+                    .parent('.tile')
                     .removeClass(stateToRemove)
                     .addClass(stateToAdd);
-
             }
         }
     });
@@ -237,13 +247,8 @@
             } else {
                 this.$el.overlay(config.overlays.manual);
             }
-            this.listenTo(vent, 'dialog:show', this.show);
-            this.listenTo(vent, 'game:start', this.closeOverlay);
-            if (options.isPlayButton) {
-                return new PlayButtonView({
-                    el: this.$('a[href="#play"]')
-                });
-            }
+            this.listenTo(app.vent, 'dialog:show', this.show);
+            this.listenTo(app.vent, 'game:start', this.closeOverlay);
         },
         show: function (id) {
             this.openOverlay();
@@ -264,51 +269,62 @@
     });
 
     var SplashView = DialogView.extend({
-        initialize: function (options) {
-            this._super(options);
-        }
-    });
-
-    var PlayButtonView = Backbone.View.extend({
         events: {
-            'click': 'onClick'
+            'click [href=#settings]': 'onClickPlay'
         },
-        onClick: function (e) {
-            e.preventDefault();
-            vent.trigger('game:start');
+        onClickPlay: function (e) {
+            app.vent.trigger('game:init');
         }
     });
 
     var SettingsView = DialogView.extend({
         events: {
-            'change input[type=radio]': 'onChange',
-            'click .button-red': 'onCancel'
+            'change input[type=radio]': 'onConfig',
+            'click [href=#play]': 'onPlay',
+            'click [href=#splash]': 'onCancel'
         },
-        onChange: function (e) {
-            var guesses = $(e.target).attr('value');
-            this.model.set({
-                'guessesAllowed': guesses,
-                'guessesRemaining': guesses
-            });
+        initialize: function () {
+            this._super();
+            this.listenTo(app.vent, 'game:init', this.initForm);
+        },
+        initForm: function () {
+            var guessesAllowed = app.models.game.get('guessesAllowed');
+            this.$('input[value=' + guessesAllowed + ']').prop('checked', true);
+        },
+        onConfig: function (e) {
+            var guessesAllowed = parseInt($(e.target).attr('value'), 10);
+            app.models.game.set('guessesAllowed', guessesAllowed);
+        },
+        onPlay: function (e) {
+            e.preventDefault();
+            app.vent.trigger('game:start');
         },
         onCancel: function (e) {
-            var guesses = this.model.previousAttributes().guessesAllowed;
+            var guessesAllowed = app.models.game.previousAttributes().guessesAllowed;
             e.preventDefault();
-            this.model.set({
-                'guessesAllowed': guesses,
-                'guessesRemaining': guesses
-            });
+            app.models.game.set('guessesAllowed', guessesAllowed);
         }
     });
 
     var ResultView = DialogView.extend({
+        events: {
+            'click [href=#play]': 'onReplay'
+        },
         initialize: function (options) {
             this._super(options);
-            this.listenTo(vent, 'game:result', this.show);
+            this.listenTo(app.vent, 'game:result', this.showResult);
         },
-        show: function (data) {
-            this._super(data.result);
-            this.$('span.secret-number').html(data.secretNumber);
+        showResult: function () {
+            this.show(app.models.game.get('result'));
+            this.$('span.secret-number').html(app.models.game.get('secretNumber'));
+        },
+        onReplay: function (e) {
+            var guessesAllowed = app.models.game.get('guessesAllowed');
+            e.preventDefault();
+            app.models.game = new Game({
+                guessesAllowed: guessesAllowed
+            });
+            app.vent.trigger('game:start');
         }
     });
 
@@ -317,7 +333,6 @@
             'click': 'onClick'
         },
         initialize: function () {
-            var self = this;
             this.$el.attr('rel', this.$el.attr('href')).overlay(config.overlays.manual);
         },
         onClick: function (e) {
@@ -325,66 +340,53 @@
             this.showDialog();
         },
         showDialog: function (e) {
-            vent.trigger('dialog:show', this.$el.attr('href').slice(1));
+            app.vent.trigger('dialog:show', this.$el.attr('href').slice(1));
         }
     });
 
+    // app
+
+    var App = function () {};
+
+    App.prototype = {
+        models: {},
+        views: {},
+        vent: _.extend({}, Backbone.Events),
+        init: function () {
+            app.models.game = new Game();
+            this.initPlayingArea();
+            this.initDialogs();
+            $('a.dialog').each(this.initDialogTrigger);
+        },
+        initPlayingArea: function () {
+            return new PlayingAreaView({
+                el: $('#play')
+            });
+        },
+        initDialogs: function () {
+            var splashView = new SplashView({
+                el: $('#splash')
+            });
+            var settingsView = new SettingsView({
+                el: $('#settings')
+            });
+            var winView = new ResultView({
+                el: $('#win')
+            });
+            var loseView = new ResultView({
+                el: $('#lose')
+            });
+        },
+        initDialogTrigger: function () {
+            return new DialogTriggerView({
+                el: $(this)
+            });
+        }
+    };
+
     // init code
 
-    var app = {};
-    app.models = {};
-    app.models.game = new Game();
-
-    app.init = function () {
-        app.initPlayingArea($('#play'));
-        $('div.dialog').each(app.initDialogs);
-        $('a.dialog').each(app.initDialogTriggers);
-    };
-
-    app.initPlayingArea = function ($el) {
-        return new PlayingAreaView({
-            el: $el
-        });
-    };
-
-    app.initDialogs = function () {
-        var $el = $(this),
-            id = $el.attr('id'),
-            view;
-        switch (id) {
-            case 'splash':
-                view = new SplashView({
-                    el: $el,
-                    isPlayButton: true
-                });
-                break;
-            case 'settings':
-                view = new SettingsView({
-                    el: $el,
-                    model: app.models.game
-                });
-                break;
-            case 'win':
-            case 'lose':
-                view = new ResultView({
-                    el: $el,
-                    isPlayButton: true
-                });
-                break;
-            default:
-                view = new DialogView({
-                    el: $el
-                });
-        }
-        return view;
-    };
-
-    app.initDialogTriggers = function () {
-        return new DialogTriggerView({
-            el: $(this)
-        });
-    };
-
+    var app = new App();
     app.init();
 
 }(jQuery, _, Backbone));
