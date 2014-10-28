@@ -2,3 +2,10 @@ bower_components
 node_modules
 
 src/scripts/lib
+
+server/views/includes/dialogs/leaderboard.jade
+server/views/includes/dialogs/profile.jade
+src/scripts/profileView.js
+src/scripts/re-main-ing.js
+tasks/build.js
+tasks/release.js
