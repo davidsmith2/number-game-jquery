@@ -96,7 +96,7 @@
 
     // views
 
-    var PlayingAreaView = Backbone.View.extend({
+    var GameBoardView = Backbone.View.extend({
         events: {
             'click a[href=#splash]': 'quit'
         },
@@ -104,6 +104,16 @@
             this.initTiles();
             this.listenTo(app.vent, 'game:start', this.onStart);
             this.listenTo(app.vent, 'game:play', this.onPlay);
+        },
+        initTiles: function () {
+            return new GameBoardTilesView({
+                el: this.$('#tiles')
+            });
+        },
+        initGauges: function () {
+            return new GameBoardGaugesView({
+                el: this.$('#gauges')
+            });
         },
         onStart: function () {
             this.initGauges();
@@ -114,20 +124,10 @@
         quit: function (e) {
             e.preventDefault();
             app.quit();
-        },
-        initTiles: function () {
-            return new TilesView({
-                el: this.$('#tiles')
-            });
-        },
-        initGauges: function () {
-            return new GaugesView({
-                el: this.$('#gauges')
-            });
         }
     });
 
-    var GaugesView = Backbone.View.extend({
+    var GameBoardGaugesView = Backbone.View.extend({
         ids: {
             'guess'                : 'guess',
             'guess-accuracy'       : 'guessAccuracy',
@@ -160,7 +160,7 @@
         }
     });
 
-    var TileLinkView = Backbone.View.extend({
+    var GameBoardTileLinkView = Backbone.View.extend({
         tagName: 'a',
         className: 'tile',
         initialize: function (options) {
@@ -169,15 +169,15 @@
         }
     });
 
-    var TileView = Backbone.View.extend({
+    var GameBoardTileView = Backbone.View.extend({
         className: 'tile',
         initialize: function (options) {
-            this.$el.append(new TileLinkView(options).el);
+            this.$el.append(new GameBoardTileLinkView(options).el);
             this.render();
         }
     });
 
-    var TilesView = Backbone.View.extend({
+    var GameBoardTilesView = Backbone.View.extend({
         events: {
             'click a': 'onClick'
         },
@@ -186,7 +186,7 @@
             var lowTile = config.settings.lowTile,
                 highTile = config.settings.highTile;
             for (var i = lowTile; i < (highTile + 1); i++) {
-                tileView = new TileView({
+                tileView = new GameBoardTileView({
                     number: i
                 });
                 this.$el.append(tileView.el);
@@ -236,6 +236,19 @@
         }
     });
 
+    var DialogTriggerView = Backbone.View.extend({
+        events: {
+            'click': 'onClick'
+        },
+        initialize: function () {
+            this.$el.attr('rel', this.$el.attr('href')).overlay(config.overlays.manual);
+        },
+        onClick: function (e) {
+            e.preventDefault();
+            app.dialog(this.$el.attr('href').slice(1));
+        }
+    });
+
     var DialogView = Backbone.View.extend({
         initialize: function (options) {
             var id = this.$el.attr('id');
@@ -278,7 +291,7 @@
         }
     });
 
-    var SplashView = DialogView.extend({
+    var SplashDialogView = DialogView.extend({
         events: {
             'click [href=#settings]': 'start'
         },
@@ -288,7 +301,7 @@
         }
     });
 
-    var SettingsView = DialogView.extend({
+    var SettingsDialogView = DialogView.extend({
         events: {
             'change input[type=radio]': 'configure',
             'click [href=#play]': 'play',
@@ -316,7 +329,7 @@
         }
     });
 
-    var ResultView = DialogView.extend({
+    var ResultDialogView = DialogView.extend({
         events: {
             'click [href=#play]': 'replay',
             'click [href=#splash]': 'quit'
@@ -342,19 +355,6 @@
         }
     });
 
-    var DialogTriggerView = Backbone.View.extend({
-        events: {
-            'click': 'onClick'
-        },
-        initialize: function () {
-            this.$el.attr('rel', this.$el.attr('href')).overlay(config.overlays.manual);
-        },
-        onClick: function (e) {
-            e.preventDefault();
-            app.dialog(this.$el.attr('href').slice(1));
-        }
-    });
-
     // app
 
     var App = function () {};
@@ -365,19 +365,19 @@
         vent: _.extend({}, Backbone.Events),
         init: function () {
             console.log('game:init');
-            this.views.playingArea =  new PlayingAreaView({
+            this.views.gameBoard =  new GameBoardView({
                 el: $('#play')
             });
-            this.views.splash = new SplashView({
+            this.views.splashDialog = new SplashDialogView({
                 el: $('#splash')
             });
-            this.views.settings = new SettingsView({
+            this.views.settingsDialog = new SettingsDialogView({
                 el: $('#settings')
             });
-            this.views.win = new ResultView({
+            this.views.winDialog = new ResultDialogView({
                 el: $('#win')
             });
-            this.views.lose = new ResultView({
+            this.views.loseDialog = new ResultDialogView({
                 el: $('#lose')
             });
             $('a.dialog').each(function () {
@@ -418,7 +418,7 @@
         }
     };
 
-    // init code
+    // init
 
     var app = new App();
     app.init();
