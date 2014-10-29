@@ -1,12 +1,12 @@
 bower_components
 node_modules
 
-src/scripts/lib
-src/styles
+src/js/lib/vendor
+src/css
 
 server/views/includes/dialogs/leaderboard.jade
 server/views/includes/dialogs/profile.jade
-src/scripts/profileView.js
-src/scripts/re-main-ing.js
+src/js/profileView.js
+src/js/re-main-ing.js
 tasks/build.js
 tasks/release.js

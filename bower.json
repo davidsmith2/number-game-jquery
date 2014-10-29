@@ -30,7 +30,7 @@
     "backbone.super": "~1.0.2"
   },
   "install": {
-    "path": "src/scripts/lib/vendor",
+    "path": "src/js/lib/vendor",
     "sources": {
       "jquery": "bower_components/jquery/jquery.js",
       "jquery.migrate": "bower_components/jquery.migrate/jquery-migrate-1.2.1.js",
