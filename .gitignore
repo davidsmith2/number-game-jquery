@@ -2,6 +2,7 @@ bower_components
 node_modules
 
 src/scripts/lib
+src/styles
 
 server/views/includes/dialogs/leaderboard.jade
 server/views/includes/dialogs/profile.jade
