@@ -312,7 +312,7 @@
         },
         start: function (e) {
             e.preventDefault();
-            app.vent.trigger('start', this.guessesAllowed);
+            app.vent.trigger('starting', this.guessesAllowed);
         }
     });
 
@@ -359,14 +359,16 @@
             this.$('span.secret-number').html(result.secretNumber);
         },
         replay: function (e) {
-            var guessesAllowed = app.models.game.get('guessesAllowed');
             e.preventDefault();
-            app.vent.trigger('replaying', guessesAllowed);
+            this.trigger('replaying');
         },
         quit: function (e) {
-            var guessesAllowed = app.models.game.get('guessesAllowed');
             e.preventDefault();
-            app.vent.trigger('quitting', guessesAllowed);
+            this.trigger('quitting');
+        },
+        trigger: function (eventName) {
+            var guessesAllowed = app.models.game.get('guessesAllowed');
+            app.vent.trigger(eventName, guessesAllowed);
         }
     });
 
@@ -379,7 +381,7 @@
         views: {},
         vent: _.extend({}, Backbone.Events),
         init: function () {
-            console.log('init');
+            console.log('initializing');
             this.views.gameBoard =  new GameBoardView({
                 el: $('#play')
             });
@@ -400,19 +402,19 @@
                     el: $(this)
                 });
             });
-            this.vent.on('start', this.onStart, this);
+            this.vent.on('starting', this.onStarting, this);
             this.vent.on('replaying', this.onReplaying, this);
             this.vent.on('quitting', this.onQuitting, this);
         },
-        onStart: function (guessesAllowed) {
-            console.log('start');
-            this.set(guessesAllowed);
+        onStarting: function (guessesAllowed) {
+            console.log('starting');
+            this.create(guessesAllowed);
             this.vent.trigger('started');
         },
         onReplaying: function (guessesAllowed) {
             console.log('replaying');
             this.reset();
-            this.set(guessesAllowed);
+            this.create(guessesAllowed);
             this.vent.trigger('play');
         },
         onQuitting: function (guessesAllowed) {
@@ -420,12 +422,14 @@
             this.reset();
             this.vent.trigger('quit', guessesAllowed);
         },
-        set: function (guessesAllowed) {
+        create: function (guessesAllowed) {
+            console.log('creating');
             this.models.game = new Game({
                 guessesAllowed: guessesAllowed
             });
         },
         reset: function () {
+            console.log('resetting');
             var game = this.models.game;
             game.clear().set(game.defaults);
         }
