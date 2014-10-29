@@ -37,27 +37,20 @@
         defaults: {
             guess: '-',
             guessAccuracy: '-',
-            guessesAllowed: config.settings.guessesAllowed,
+            guessesAllowed: null,
             guessesMade: 0,
             guessesRemaining: null
         },
         initialize: function () {
             var secretNumber = this.getSecretNumber(),
                 self = this;
-
-
-
-            console.log(secretNumber);
-
-
-
+            console.log('The secret number is: ' + secretNumber);
             this.set('guessesRemaining', this.get('guessesAllowed'));
             this.on('change:guessesAllowed', this.onChangeGuessesAllowed, this);
-            this.listenTo(app.vent, 'game:guess', function (guess) {
+            this.listenTo(app.vent, 'guess', function (guess) {
                 self.onGuess(guess, secretNumber);
             });
-            this.listenTo(app.vent, 'game:quit', this.onQuit);
-            this.listenTo(app.vent, 'game:result', this.onResult);
+            this.listenTo(app.vent, 'result', this.onResult);
         },
         onChangeGuessesAllowed: function (game) {
             var guessesAllowed = game.get('guessesAllowed');
@@ -77,12 +70,15 @@
             } else {
                 this.onRightGuess(guess, secretNumber);
             }
-            app.guessed();
+            app.vent.trigger('guessed');
         },
         onWrongGuess: function (guess, secretNumber) {
             var guessAccuracy;
             if (this.get('guessesRemaining') === 0) {
-                app.result('lose', secretNumber);
+                app.vent.trigger('result', {
+                    secretNumber: secretNumber,
+                    type: 'lose'
+                });
             }
             if (guess < secretNumber) {
                 guessAccuracy = config.strings.lowGuess;
@@ -93,11 +89,12 @@
         },
         onRightGuess: function (guess, secretNumber) {
             this.set('guessAccuracy', config.strings.guessAccuracy);
-            app.result('win', secretNumber);
+            app.vent.trigger('result', {
+                secretNumber: secretNumber,
+                type: 'win'
+            });
         },
-        onQuit: function () {},
         onResult: function () {
-            this.clear().set(this.defaults);
             this.stopListening();
         }
     });
@@ -110,8 +107,8 @@
         },
         initialize: function () {
             this.initTiles();
-            this.listenTo(app.vent, 'game:start', this.onStart);
-            this.listenTo(app.vent, 'game:play', this.onPlay);
+            this.listenTo(app.vent, 'started', this.onStarted);
+            this.listenTo(app.vent, 'play', this.onPlay);
         },
         initTiles: function () {
             return new GameBoardTilesView({
@@ -123,15 +120,16 @@
                 el: this.$('#gauges')
             });
         },
-        onStart: function () {
+        onStarted: function () {
             this.initGauges();
         },
         onPlay: function () {
             this.$el.expose();
         },
         quit: function (e) {
+            var guessesAllowed = app.models.game.get('guessesAllowed');
             e.preventDefault();
-            app.quit();
+            app.vent.trigger('quitting', guessesAllowed);
         }
     });
 
@@ -146,9 +144,9 @@
         initialize: function () {
             var self = this;
             this.updateAll();
-            this.listenTo(app.vent, 'game:play', this.updateAll);
-            this.listenTo(app.vent, 'game:guessed', this.updateAll);
-            this.listenTo(app.vent, 'game:result', this.updateAll);
+            this.listenTo(app.vent, 'play', this.updateAll);
+            this.listenTo(app.vent, 'guessed', this.updateAll);
+            this.listenTo(app.vent, 'result', this.updateAll);
             app.models.game.on('change:guessesAllowed', function (game) {
                 self.update('guesses-allowed');
                 self.update('guesses-remaining');
@@ -200,8 +198,8 @@
                 });
                 this.$el.append(tileView.el);
             }
-            this.listenTo(app.vent, 'game:play', this.onPlay);
-            this.listenTo(app.vent, 'game:result', this.onResult);
+            this.listenTo(app.vent, 'play', this.onPlay);
+            this.listenTo(app.vent, 'result', this.onResult);
         },
         onClick: function (e) {
             e.preventDefault();
@@ -211,16 +209,16 @@
             var state = this.states[0],
                 guess = parseInt($eventTarget.text(), 10);
             $eventTarget.addClass(state).parent('.tile').addClass(state);
-            app.guess(guess);
+            app.vent.trigger('guess', guess);
         },
         onPlay: function () {
             var states = this.states.join(' ');
             this.$('.tile').removeClass(states);
         },
         onResult: function (result) {
-            var $eventTarget = this.$('a[href=#' + app.models.game.get('guess') + ']');
+            var $eventTarget = this.$('a[href=#' + result.secretNumber + ']');
             $eventTarget
-                .attr('rel', '#' + result)
+                .attr('rel', '#' + result.type)
                 .overlay(
                     $.extend(
                         {},
@@ -229,7 +227,7 @@
                     )
                 )
                 .removeAttr('rel');
-            if (result === 'win') {
+            if (result.type === 'win') {
                 this.onWin($eventTarget);
             }
         },
@@ -254,7 +252,7 @@
         },
         onClick: function (e) {
             e.preventDefault();
-            app.dialog(this.$el.attr('href').slice(1));
+            app.vent.trigger('dialog:show', this.$el.attr('href').slice(1));
         }
     });
 
@@ -273,8 +271,8 @@
             } else {
                 this.$el.overlay(config.overlays.manual);
             }
-            this.listenTo(app.vent, 'game:dialog', this.onDialog);
-            this.listenTo(app.vent, 'game:play', this.onPlay);
+            this.listenTo(app.vent, 'dialog:show', this.onDialog);
+            this.listenTo(app.vent, 'play', this.onPlay);
         },
         onDialog: function (id) {
             this.openOverlay();
@@ -301,12 +299,20 @@
     });
 
     var SplashDialogView = DialogView.extend({
+        guessesAllowed: config.settings.guessesAllowed,
         events: {
             'click [href=#settings]': 'start'
         },
+        initialize: function () {
+            this._super();
+            app.vent.on('quit', this.onQuit, this);
+        },
+        onQuit: function (guessesAllowed) {
+            this.guessesAllowed = guessesAllowed;
+        },
         start: function (e) {
             e.preventDefault();
-            app.start();
+            app.vent.trigger('start', this.guessesAllowed);
         }
     });
 
@@ -314,13 +320,13 @@
         events: {
             'change input[type=radio]': 'configure',
             'click [href=#play]': 'play',
-            'click [href=#splash]': 'quit'
+            'click [href=#splash]': 'cancel'
         },
         initialize: function () {
             this._super();
-            this.listenTo(app.vent, 'game:start', this.onStart);
+            this.listenTo(app.vent, 'started', this.onStarted);
         },
-        onStart: function () {
+        onStarted: function () {
             var guessesAllowed = app.models.game.get('guessesAllowed');
             this.$('input[value=' + guessesAllowed + ']').prop('checked', true);
         },
@@ -330,11 +336,12 @@
         },
         play: function (e) {
             e.preventDefault();
-            app.play();
+            app.vent.trigger('play');
         },
-        quit: function (e) {
+        cancel: function (e) {
+            var guessesAllowed = app.models.game.previousAttributes().guessesAllowed;
             e.preventDefault();
-            app.quit();
+            app.models.game.set('guessesAllowed', guessesAllowed);
         }
     });
 
@@ -345,21 +352,21 @@
         },
         initialize: function (options) {
             this._super(options);
-            this.listenTo(app.vent, 'game:result', this.onResult);
+            this.listenTo(app.vent, 'result', this.onResult);
         },
-        onResult: function (result, secretNumber) {
-            app.dialog(result);
-            this.$('span.secret-number').html(secretNumber);
+        onResult: function (result) {
+            app.vent.trigger('dialog:show', result.type);
+            this.$('span.secret-number').html(result.secretNumber);
         },
         replay: function (e) {
-            var guessesAllowed, game;
+            var guessesAllowed = app.models.game.get('guessesAllowed');
             e.preventDefault();
-            guessesAllowed = app.models.game.get('guessesAllowed');
-            app.replay(guessesAllowed);
+            app.vent.trigger('replaying', guessesAllowed);
         },
         quit: function (e) {
+            var guessesAllowed = app.models.game.get('guessesAllowed');
             e.preventDefault();
-            app.quit();
+            app.vent.trigger('quitting', guessesAllowed);
         }
     });
 
@@ -372,7 +379,7 @@
         views: {},
         vent: _.extend({}, Backbone.Events),
         init: function () {
-            console.log('game:init');
+            console.log('init');
             this.views.gameBoard =  new GameBoardView({
                 el: $('#play')
             });
@@ -393,41 +400,34 @@
                     el: $(this)
                 });
             });
+            this.vent.on('start', this.onStart, this);
+            this.vent.on('replaying', this.onReplaying, this);
+            this.vent.on('quitting', this.onQuitting, this);
         },
-        start: function (game) {
-            console.log('game:start');
-            this.models.game = new Game();
-            this.vent.trigger('game:start');
+        onStart: function (guessesAllowed) {
+            console.log('start');
+            this.set(guessesAllowed);
+            this.vent.trigger('started');
         },
-        play: function () {
-            console.log('game:play');
-            this.vent.trigger('game:play');
+        onReplaying: function (guessesAllowed) {
+            console.log('replaying');
+            this.reset();
+            this.set(guessesAllowed);
+            this.vent.trigger('play');
         },
-        guess: function (guess) {
-            console.log('game:guess');
-            this.vent.trigger('game:guess', guess);
+        onQuitting: function (guessesAllowed) {
+            console.log('quitting');
+            this.reset();
+            this.vent.trigger('quit', guessesAllowed);
         },
-        guessed: function (guess) {
-            console.log('game:guessed');
-            this.vent.trigger('game:guessed');
-        },
-        result: function (result, secretNumber) {
-            console.log('game:result');
-            this.vent.trigger('game:result', result, secretNumber);
-        },
-        replay: function (guessesAllowed) {
-            console.log('game:replay');
+        set: function (guessesAllowed) {
             this.models.game = new Game({
                 guessesAllowed: guessesAllowed
             });
-            this.play();
         },
-        quit: function () {
-            console.log('game:quit');
-            this.vent.trigger('game:quit');
-        },
-        dialog: function (id) {
-            this.vent.trigger('game:dialog', id);
+        reset: function () {
+            var game = this.models.game;
+            game.clear().set(game.defaults);
         }
     };
 
@@ -435,6 +435,5 @@
 
     var app = new App();
     app.init();
-
 
 }(jQuery, _, Backbone));
