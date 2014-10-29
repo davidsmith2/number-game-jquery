@@ -1,3 +1,3 @@
 module.exports = function (grunt) {
-    grunt.registerTask('default', ['web']);
+    grunt.registerTask('default', ['build', 'web']);
 };

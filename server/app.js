@@ -8,8 +8,8 @@ app.use(require('connect-livereload')({
     port: 35729
 }));
 
-app.use(express.static(path.join(__dirname, '../src')));
-app.use('/', express.static(path.join(__dirname, '../src')));
+app.use(express.static(path.join(__dirname, '../build')));
+app.use('/', express.static(path.join(__dirname, '../build')));
 
 app.set('views', __dirname + '/views');
 

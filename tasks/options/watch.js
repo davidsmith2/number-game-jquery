@@ -1,7 +1,6 @@
 module.exports = {
     frontend: {
         files: [
-            'src/index.html',
             'src/less/**/*.less',
             'src/scripts/**/*.js'
         ],
