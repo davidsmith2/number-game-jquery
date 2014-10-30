@@ -1,6 +1,12 @@
 (function ($, _, Backbone) {
 
-    // config
+    // lib config
+
+    _.templateSettings = {
+        interpolate: /\#\{(.+?)\}/g
+    };
+
+    // app config
 
     var config = {
         settings: {
@@ -136,7 +142,7 @@
     var BoardGaugesView = Backbone.View.extend({
         initialize: function () {
             var self = this;
-            $.get('/js/templates/boardGauges.html', function (html) {
+            $.get('/html/board/gauges.html', function (html) {
                 self.template = _.template(html);
                 self.render();
             });

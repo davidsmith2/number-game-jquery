@@ -1,3 +1,3 @@
 module.exports = function (grunt) {
-    grunt.registerTask('build', ['clean', 'copy', 'less']);
+    grunt.registerTask('build', ['clean', 'copy', 'jade', 'less']);
 };

@@ -1,0 +1,25 @@
+#guess
+    span.label Current
+    span.value
+        unless isPageLoad
+            !='#{guess}'
+#guess-accuracy
+    span.label Low/High
+    span.value
+        unless isPageLoad
+            !='#{guessAccuracy}'
+#guesses-allowed
+    span.label Allowed
+    span.value
+        unless isPageLoad
+            !='#{guessesAllowed}'
+#guesses-made
+    span.label Made
+    span.value
+        unless isPageLoad
+            !='#{guessesMade}'
+#guesses-remaining
+    span.label Remaining
+    span.value
+        unless isPageLoad
+            !='#{guessesRemaining}'

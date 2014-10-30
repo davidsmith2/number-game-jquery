@@ -1,9 +1,9 @@
 module.exports = {
     frontend: {
         files: [
+            'src/jade/**/*.jade',
             'src/less/**/*.less',
-            'src/js/**/*.js',
-            'src/js/**/*.html'
+            'src/js/**/*.js'
         ],
         tasks: [
             'build'
