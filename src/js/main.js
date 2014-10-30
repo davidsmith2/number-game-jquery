@@ -88,7 +88,7 @@
             this.set('guessAccuracy', guessAccuracy);
         },
         onRightGuess: function (guess, secretNumber) {
-            this.set('guessAccuracy', config.strings.guessAccuracy);
+            this.set('guessAccuracy', config.strings.rightGuess);
             app.vent.trigger('result', {
                 secretNumber: secretNumber,
                 type: 'win'
@@ -101,7 +101,7 @@
 
     // views
 
-    var GameBoardView = Backbone.View.extend({
+    var BoardView = Backbone.View.extend({
         events: {
             'click a[href=#splash]': 'quit'
         },
@@ -111,12 +111,12 @@
             this.listenTo(app.vent, 'play', this.onPlay);
         },
         initTiles: function () {
-            return new GameBoardTilesView({
+            return new BoardTilesView({
                 el: this.$('#tiles')
             });
         },
         initGauges: function () {
-            return new GameBoardGaugesView({
+            return new BoardGaugesView({
                 el: this.$('#gauges')
             });
         },
@@ -133,41 +133,27 @@
         }
     });
 
-    var GameBoardGaugesView = Backbone.View.extend({
-        ids: {
-            'guess'                : 'guess',
-            'guess-accuracy'       : 'guessAccuracy',
-            'guesses-allowed'      : 'guessesAllowed',
-            'guesses-made'         : 'guessesMade',
-            'guesses-remaining'    : 'guessesRemaining'
-        },
+    var BoardGaugesView = Backbone.View.extend({
         initialize: function () {
             var self = this;
-            this.updateAll();
-            this.listenTo(app.vent, 'play', this.updateAll);
-            this.listenTo(app.vent, 'guessed', this.updateAll);
-            this.listenTo(app.vent, 'result', this.updateAll);
-            app.models.game.on('change:guessesAllowed', function (game) {
-                self.update('guesses-allowed');
-                self.update('guesses-remaining');
+            $.get('/js/templates/boardGauges.html', function (html) {
+                self.template = _.template(html);
+                self.render();
             });
+            this.listenTo(app.vent, 'play guessed result', this.render);
+            this.listenTo(app.vent, 'guessed', this.onGuessed);
         },
-        updateAll: function () {
-            for (var id in this.ids) {
-                this.update(id);
-            }
+        render: function () {
+            this.$el.html(this.template(app.models.game.toJSON()));
+            return this;
         },
-        update: function (id) {
-            var $el = this.$('#' + id + ' > .value'),
-                guessAccuracy = app.models.game.get('guessAccuracy');
-            $el.html(app.models.game.get(this.ids[id]));
-            if (guessAccuracy && id === 'guess-accuracy') {
-                $el.removeClass().addClass('value ' + guessAccuracy.toLowerCase());
-            }
+        onGuessed: function () {
+            var guessAccuracy = app.models.game.get('guessAccuracy');
+            this.$('#guess-accuracy > .value').removeClass().addClass('value ' + guessAccuracy.toLowerCase());
         }
     });
 
-    var GameBoardTileLinkView = Backbone.View.extend({
+    var BoardTileLinkView = Backbone.View.extend({
         tagName: 'a',
         className: 'tile',
         initialize: function (options) {
@@ -176,15 +162,15 @@
         }
     });
 
-    var GameBoardTileView = Backbone.View.extend({
+    var BoardTileView = Backbone.View.extend({
         className: 'tile',
         initialize: function (options) {
-            this.$el.append(new GameBoardTileLinkView(options).el);
+            this.$el.append(new BoardTileLinkView(options).el);
             this.render();
         }
     });
 
-    var GameBoardTilesView = Backbone.View.extend({
+    var BoardTilesView = Backbone.View.extend({
         events: {
             'click a': 'onClick'
         },
@@ -193,7 +179,7 @@
             var lowTile = config.settings.lowTile,
                 highTile = config.settings.highTile;
             for (var i = lowTile; i < (highTile + 1); i++) {
-                tileView = new GameBoardTileView({
+                tileView = new BoardTileView({
                     number: i
                 });
                 this.$el.append(tileView.el);
@@ -214,6 +200,7 @@
         onPlay: function () {
             var states = this.states.join(' ');
             this.$('.tile').removeClass(states);
+            this.$('a.tile').removeAttr('rel');
         },
         onResult: function (result) {
             var $eventTarget = this.$('a[href=#' + result.secretNumber + ']');
@@ -225,8 +212,7 @@
                         config.overlays.manual,
                         config.overlays.auto
                     )
-                )
-                .removeAttr('rel');
+                );
             if (result.type === 'win') {
                 this.onWin($eventTarget);
             }
@@ -382,7 +368,7 @@
         vent: _.extend({}, Backbone.Events),
         init: function () {
             console.log('initializing');
-            this.views.gameBoard =  new GameBoardView({
+            this.views.gameBoard =  new BoardView({
                 el: $('#play')
             });
             this.views.splashDialog = new SplashDialogView({

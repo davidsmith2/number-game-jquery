@@ -10,7 +10,7 @@ module.exports = {
             {
                 expand: true,
                 cwd: 'src/',
-                src: ['js/main.js', 'js/lib/**/*.js'],
+                src: ['js/main.js', 'js/lib/**/*.js', 'js/templates/**/*.html'],
                 dest: 'build'
             }
         ]

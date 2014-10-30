@@ -2,10 +2,11 @@ module.exports = {
     frontend: {
         files: [
             'src/less/**/*.less',
-            'src/scripts/**/*.js'
+            'src/js/**/*.js',
+            'src/js/**/*.html'
         ],
         tasks: [
-            'less:dev'
+            'build'
         ],
         options: {
             livereload: true
