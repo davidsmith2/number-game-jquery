@@ -4,7 +4,6 @@ module.exports = {
             pretty: true
         },
         files: {
-            'build/html/board/gauges.html': 'src/jade/board/gauges.jade'
         }
     }
 };

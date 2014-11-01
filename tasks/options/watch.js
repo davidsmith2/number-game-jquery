@@ -1,7 +1,7 @@
 module.exports = {
     frontend: {
         files: [
-            'src/jade/**/*.jade',
+            'src/html/**/*.html',
             'src/less/**/*.less',
             'src/js/**/*.js'
         ],

@@ -17,8 +17,7 @@ app.set('views', __dirname + '/views');
 
 app.get('/', function (req, res) {
     res.render('index.jade', {
-        title: 'Numbers Up',
-        isPageLoad: true
+        title: 'Numbers Up'
     });
 });
 

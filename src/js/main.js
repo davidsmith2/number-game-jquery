@@ -1,11 +1,5 @@
 (function ($, _, Backbone) {
 
-    // lib config
-
-    _.templateSettings = {
-        interpolate: /\#\{(.+?)\}/g
-    };
-
     // app config
 
     var config = {
@@ -117,12 +111,12 @@
             this.listenTo(app.vent, 'play', this.onPlay);
         },
         initTiles: function () {
-            return new BoardTilesView({
+            return new TilesView({
                 el: this.$('#tiles')
             });
         },
         initGauges: function () {
-            return new BoardGaugesView({
+            return new GaugesView({
                 el: this.$('#gauges')
             });
         },
@@ -139,7 +133,7 @@
         }
     });
 
-    var BoardGaugesView = Backbone.View.extend({
+    var GaugesView = Backbone.View.extend({
         initialize: function () {
             var self = this;
             $.get('/html/board/gauges.html', function (html) {
@@ -159,58 +153,48 @@
         }
     });
 
-    var BoardTileLinkView = Backbone.View.extend({
-        tagName: 'a',
-        className: 'tile',
-        initialize: function (options) {
-            this.$el.attr('href', '#' + options.number).html(options.number);
-            this.render();
-        }
-    });
-
-    var BoardTileView = Backbone.View.extend({
-        className: 'tile',
-        initialize: function (options) {
-            this.$el.append(new BoardTileLinkView(options).el);
-            this.render();
-        }
-    });
-
-    var BoardTilesView = Backbone.View.extend({
+    var TilesView = Backbone.View.extend({
         events: {
-            'click a': 'onClick'
+            'click a.tile': 'onClickTile'
         },
-        states: ['visited', 'match'],
+        classes: ['visited', 'match'],
         initialize: function () {
-            var lowTile = config.settings.lowTile,
-                highTile = config.settings.highTile;
-            for (var i = lowTile; i < (highTile + 1); i++) {
-                tileView = new BoardTileView({
-                    number: i
-                });
-                this.$el.append(tileView.el);
-            }
             this.listenTo(app.vent, 'play', this.onPlay);
             this.listenTo(app.vent, 'result', this.onResult);
+            this.render();
         },
-        onClick: function (e) {
+        render: function () {
+            var low = config.settings.lowTile,
+                high = config.settings.highTile;
+            for (var i = low; i < (high + 1); i++) {
+                this.$el.append(this.renderItem(i).el);
+            }
+            return this;
+        },
+        renderItem: function (number) {
+            return new TileView({
+                model: new Backbone.Model({
+                    number: number
+                })
+            });
+        },
+        onClickTile: function (e) {
             e.preventDefault();
-            this.onGuess($(e.target));
+            this.guess($(e.target));
         },
-        onGuess: function ($eventTarget) {
-            var state = this.states[0],
-                guess = parseInt($eventTarget.text(), 10);
-            $eventTarget.addClass(state).parent('.tile').addClass(state);
+        guess: function ($anchor) {
+            var classToAdd = this.classes[0],
+                guess = parseInt($anchor.text(), 10);
+            $anchor.addClass(classToAdd).parent('.tile').addClass(classToAdd);
             app.vent.trigger('guess', guess);
         },
         onPlay: function () {
-            var states = this.states.join(' ');
-            this.$('.tile').removeClass(states);
-            this.$('a.tile').removeAttr('rel');
+            var classes = this.classes.join(' ');
+            this.$('.tile').removeClass(classes).removeAttr('rel');
         },
         onResult: function (result) {
-            var $eventTarget = this.$('a[href=#' + result.secretNumber + ']');
-            $eventTarget
+            var $anchor = this.$('a[href=#' + result.secretNumber + ']');
+            $anchor
                 .attr('rel', '#' + result.type)
                 .overlay(
                     $.extend(
@@ -220,18 +204,33 @@
                     )
                 );
             if (result.type === 'win') {
-                this.onWin($eventTarget);
+                this.onWin($anchor);
             }
         },
-        onWin: function ($eventTarget) {
-            var stateToRemove = this.states[0],
-                stateToAdd = this.states[1];
-            $eventTarget
-                .removeClass(stateToRemove)
-                .addClass(stateToAdd)
+        onWin: function ($anchor) {
+            var classToRemove = this.classes[0],
+                classToAdd = this.classes[1];
+            $anchor
+                .removeClass(classToRemove)
+                .addClass(classToAdd)
                 .parent('.tile')
-                .removeClass(stateToRemove)
-                .addClass(stateToAdd);
+                .removeClass(classToRemove)
+                .addClass(classToAdd);
+        }
+    });
+
+    var TileView = Backbone.View.extend({
+        className: 'tile',
+        initialize: function (options) {
+            var self = this;
+            $.get('/html/board/tile.html', function (html) {
+                self.template = _.template(html);
+                self.render();
+            });
+        },
+        render: function () {
+            this.$el.html(this.template(this.model.toJSON()));
+            return this;
         }
     });
 
