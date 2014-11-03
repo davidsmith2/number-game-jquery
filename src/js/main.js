@@ -4,9 +4,9 @@
 
     var config = {
         settings: {
-            lowTile: 1,
+            guessesAllowed: 13,
             highTile: 100,
-            guessesAllowed: 13
+            lowTile: 1
         },
         strings: {
             highGuess: 'High',
@@ -149,15 +149,15 @@
         },
         onGuessed: function () {
             var guessAccuracy = app.models.game.get('guessAccuracy');
-            this.$('#guess-accuracy > .value').removeClass().addClass('value ' + guessAccuracy.toLowerCase());
+            this.$('#guess-accuracy > .gauge-value').removeClass().addClass('gauge-value ' + guessAccuracy.toLowerCase());
         }
     });
 
     var TilesView = Backbone.View.extend({
         events: {
-            'click a.tile': 'onClickTile'
+            'click .tile-inner': 'onClickTile'
         },
-        classes: ['visited', 'match'],
+        classes: ['visited', 'matched'],
         initialize: function () {
             this.listenTo(app.vent, 'play', this.onPlay);
             this.listenTo(app.vent, 'result', this.onResult);
@@ -220,7 +220,7 @@
     });
 
     var TileView = Backbone.View.extend({
-        className: 'tile',
+        className: 'tile tile-outer',
         initialize: function (options) {
             var self = this;
             $.get('/html/board/tile.html', function (html) {
@@ -374,7 +374,7 @@
         init: function () {
             console.log('initializing');
             this.views.gameBoard =  new BoardView({
-                el: $('#play')
+                el: $('#board')
             });
             this.views.splashDialog = new SplashDialogView({
                 el: $('#splash')
@@ -388,7 +388,7 @@
             this.views.loseDialog = new ResultDialogView({
                 el: $('#lose')
             });
-            $('a.dialog').each(function () {
+            $('.dialog-trigger').each(function () {
                 return new DialogTriggerView({
                     el: $(this)
                 });

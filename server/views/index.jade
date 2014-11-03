@@ -5,18 +5,10 @@ html(lang=en)
         title #{title}
         link(href='css/main.css', rel='stylesheet', type='text/css')
     body
-        #outer-wrapper
-            #inner-wrapper
-                #play
-                    h1 #{title}
-                    #game-board
-                        include includes/board/gauges.jade
-                        include includes/board/tiles.jade
-                        include includes/board/buttons.jade
-                include includes/dialogs/splash.jade
-                include includes/dialogs/settings.jade
-                include includes/dialogs/win.jade
-                include includes/dialogs/lose.jade
+        #wrapper-outer
+            #wrapper-inner
+                include includes/board.jade
+                include includes/dialogs.jade
         script(src='js/lib/vendor/jquery/jquery.js', type='text/javascript')
         script(src='js/lib/vendor/jquery.migrate/jquery-migrate-1.2.1.js', type='text/javascript')
         script(src='js/lib/vendor/jquery.tools/toolbox.expose.js', type='text/javascript')

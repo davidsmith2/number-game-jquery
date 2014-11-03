@@ -1,7 +1,7 @@
 #settings.dialog
     .dialog-content
         h1 Settings
-        form#settings-form
+        form
             fieldset
                 legend Number of Guesses
                 label
@@ -16,5 +16,5 @@
         .buttons
             a.button.button-green(href='#play')
                 | Play
-            a.button.button-red.dialog(href='#splash')
+            a.button.button-red.dialog-trigger(href='#splash')
                 | Cancel

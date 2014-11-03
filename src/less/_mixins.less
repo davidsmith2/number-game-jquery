@@ -1,3 +1,17 @@
+.button (@bgColor, @color) {
+    background-color: @bgColor;
+    border-radius: 10px;
+    color: @color;
+    font-family: 'Comic Sans MS';
+    font-size: 0.9em;
+    margin: 0 10px;
+    padding: 9px 15px;
+    text-decoration:none;
+    &:hover {
+        background-color: lighten(@bgColor, 5%);
+    }
+}
+
 .transition {
     /* WebKit */
     -webkit-transition-duration:          0.25s;
