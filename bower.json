@@ -27,7 +27,8 @@
     "jquery.tools": "1.2.7",
     "jquery.migrate": "~1.2.1",
     "backbone": "~1.1.2",
-    "backbone.super": "~1.0.2"
+    "backbone.super": "~1.0.2",
+    "cordova": "~3.4.0"
   },
   "install": {
     "path": "src/js/lib/vendor",

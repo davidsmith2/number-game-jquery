@@ -1,1 +1,1 @@
-module.exports = ['build'];
+module.exports = ['cordova/www'];

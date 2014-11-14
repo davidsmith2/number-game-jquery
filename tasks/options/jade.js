@@ -4,6 +4,7 @@ module.exports = {
             pretty: true
         },
         files: {
+            'cordova/www/index.html': ['src/index.jade']
         }
     }
 };

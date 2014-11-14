@@ -1,6 +1,8 @@
 module.exports = {
     frontend: {
         files: [
+            'src/index.jade',
+            'src/jade/**/*.jade',
             'src/html/**/*.html',
             'src/less/**/*.less',
             'src/js/**/*.js'
@@ -14,8 +16,7 @@ module.exports = {
     },
     backend: {
         files: [
-            'server/**/*.js',
-            'server/views/**/*.jade'
+            'server/**/*.js'
         ],
         tasks: ['express:web'],
         options: {

@@ -1,4 +1,4 @@
-(function ($, _, Backbone) {
+(function ($, _, Backbone, doc) {
 
     // app config
 
@@ -44,7 +44,6 @@
         initialize: function () {
             var secretNumber = this.getSecretNumber(),
                 self = this;
-            console.log('The secret number is: ' + secretNumber);
             this.set('guessesRemaining', this.get('guessesAllowed'));
             this.on('change:guessesAllowed', this.onChangeGuessesAllowed, this);
             this.listenTo(app.vent, 'guess', function (guess) {
@@ -136,7 +135,7 @@
     var GaugesView = Backbone.View.extend({
         initialize: function () {
             var self = this;
-            $.get('/html/board/gauges.html', function (html) {
+            $.get('html/board/gauges.html', function (html) {
                 self.template = _.template(html);
                 self.render();
             });
@@ -223,7 +222,7 @@
         className: 'tile tile-outer',
         initialize: function (options) {
             var self = this;
-            $.get('/html/board/tile.html', function (html) {
+            $.get('html/board/tile.html', function (html) {
                 self.template = _.template(html);
                 self.render();
             });
@@ -372,7 +371,6 @@
         views: {},
         vent: _.extend({}, Backbone.Events),
         init: function () {
-            console.log('initializing');
             this.views.gameBoard =  new BoardView({
                 el: $('#board')
             });
@@ -398,29 +396,24 @@
             this.vent.on('quitting', this.onQuitting, this);
         },
         onStarting: function (guessesAllowed) {
-            console.log('starting');
             this.create(guessesAllowed);
             this.vent.trigger('started');
         },
         onReplaying: function (guessesAllowed) {
-            console.log('replaying');
             this.reset();
             this.create(guessesAllowed);
             this.vent.trigger('play');
         },
         onQuitting: function (guessesAllowed) {
-            console.log('quitting');
             this.reset();
             this.vent.trigger('quit', guessesAllowed);
         },
         create: function (guessesAllowed) {
-            console.log('creating');
             this.models.game = new Game({
                 guessesAllowed: guessesAllowed
             });
         },
         reset: function () {
-            console.log('resetting');
             var game = this.models.game;
             game.clear().set(game.defaults);
         }
@@ -429,6 +422,8 @@
     // init
 
     var app = new App();
-    app.init();
+    doc.addEventListener('deviceready', function () {
+        app.init();
+    });
 
-}(jQuery, _, Backbone));
+}(jQuery, _, Backbone, document));

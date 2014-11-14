@@ -1,12 +1,11 @@
 bower_components
-node_modules
-
 build
-
-src/js/lib/vendor
+cordova
+node_modules
 
 server/views/includes/dialogs/leaderboard.jade
 server/views/includes/dialogs/profile.jade
+src/js/lib/vendor
 src/js/profileView.js
 src/js/re-main-ing.js
 tasks/release.js
