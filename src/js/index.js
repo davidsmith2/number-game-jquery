@@ -23,7 +23,8 @@
                     opacity: 0.75,
                     zIndex: 9998
                 },
-                oneInstance: false
+                oneInstance: false,
+                top: '25%'
             },
             auto: {
                 load: true
