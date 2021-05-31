@@ -1,4 +1,4 @@
-numbers-up
-==========
+number-game-jquery
+==================
 
-An interactive number-guessing game made with HTML, CSS, JavaScript, jQuery and the jQuery Tools UI library.
+A number-guessing game made with HTML, CSS, JavaScript and jQuery.
