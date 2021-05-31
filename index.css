@@ -121,10 +121,10 @@ h1 {
   background-color: #fff;
 }
 #tiles div.visited {
-  background-image:url(../images/cross.jpg);
+  background-image:url(./img/cross.jpg);
 }
 #tiles div.match {
-  background-image:url(../images/check.jpg);
+  background-image:url(./img/check.jpg);
 }
 #tiles a {
   background-color:#fff;
