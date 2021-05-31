@@ -7,7 +7,7 @@ http://us.123rf.com/400wm/400/400/panyanon/panyanon1204/panyanon120400036/132825
 /* BASIC */
 body {
   background-color:black;
-  background-image:url(../images/body-bg.jpg);
+  background-image:url(./img/body-bg.jpg);
   background-position:center top;
   background-repeat:no-repeat;
   font-family:'Comic Sans MS';
@@ -28,7 +28,7 @@ h1 {
 }
 #inner-wrapper {
   background-color:#fff;
-  background-image:url(../images/inner-wrapper-bg.gif);
+  background-image:url(./img/inner-wrapper-bg.gif);
   background-position:0 0;
   background-repeat:repeat;
   border-radius:10px;
